@@ -5,30 +5,30 @@
 
 
 import socket, ctypes, struct
+from type_hints import BPF_Instruction, BPF_Configured_Socket
 
 
 class Sniffer:
 
-    def __init__(self, interface:str, ports:list[int]):
+    def __init__(self, interface:str, protocol:str, ports:list=None) -> None:
         self._interface:str   = interface
+        self._protocol:str    = protocol
         self._ports:list[int] = ports
 
 
 
-    def _sniffer(self):
+    def _sniffer(self) -> BPF_Configured_Socket:
         sniffer = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
         sniffer.bind((self._interface, 0))
 
-        bpf_filter = self._define_filter('IP')
+        bpf_filter = self._define_filter()
 
-        # Converte o filtro BPF para a estrutura do sistema
         filter_array = (sock_filter * len(bpf_filter))()
         for i, (code, jt, jf, k) in enumerate(bpf_filter):
             filter_array[i] = sock_filter(code, jt, jf, k)
 
         prog = sock_fprog(len(bpf_filter), filter_array)
 
-        # Usa ctypes para definir SO_ATTACH_FILTER
         SO_ATTACH_FILTER = 26
         libc = ctypes.cdll.LoadLibrary("libc.so.6")
         libc.setsockopt(sniffer.fileno(), socket.SOL_SOCKET, SO_ATTACH_FILTER, ctypes.byref(prog), ctypes.sizeof(prog))
@@ -37,40 +37,35 @@ class Sniffer:
 
 
 
-    @staticmethod
-    def _define_filter(filter_type:str) -> list[tuple]:
+    def _define_filter(self) -> BPF_Instruction:
         FILTERS = {
-            'IP': [
-                (0x15, 0, 3, 0x0800),    # Jump if EtherType == IPv4 (0x0800)
-                (0x30, 0, 0, 0x09),      # Load IP Protocol (offset 9)
-                (0x15, 0, 2, 0x06),      # Jump if Protocol == TCP (0x06)
-                #(0x28, 0, 0, 0x16),      # Load Destination Port (offset 36)
-                #(0x15, 0, 2, 23432),     # Jump if Port == 23432
-            ],
-
-            'ARP': [
-                (0x15, 0, 3, 0x0806),    # Jump if EtherType == ARP (0x0806)
-            ]
+            'IP':  self._get_ip_filter_parameters(),
+            'ARP': [(0x15, 0, 3, 0x0806)] #.......: Jump if EtherType == ARP (0x0806)
         }
-        
-        filter  = [(0x28, 0, 0, 0x0000000c)]    # Load EtherType (offset 12)
-        filter += FILTERS.get(filter_type)
-        filter += [
-            (0x06, 0, 0, 0xFFFF),    # Accept packet
-            (0x06, 0, 0, 0x0000)     # Discard packet
-        ]
+        filter  = [(0x28, 0, 0, 0x0000000c)] #....: Load EtherType (offset 12)
+        filter += FILTERS.get(self._protocol) #...: Specific parameters
+        filter += [(0x06, 0, 0, 0xFFFF), #........: Accept packet
+                   (0x06, 0, 0, 0x0000)] #........: Discard packet
         return filter
 
 
 
-    @staticmethod
-    def _get_port_code(protocol:str) -> tuple[int]:
-        PORT_CODE = {
-            'TCP':  0x06,
-            'UDP':  0x11,
-            'ICMP': 0x01
-        }
-        return (0x15, 0, 0, PORT_CODE.get(protocol))
+    def _get_ip_filter_parameters(self) -> BPF_Instruction:
+        port_parameters = self._create_port_filter()
+        num             = len(port_parameters)
+        parameters      = [
+            (0x15, 0, num + 5, 0x0800), #...: Jump if EtherType == IPv4 (0x0800)
+            (0x30, 0, 0, 0x09), #...........: Load IP Protocol (offset 9)
+            (0x15, 0, num + 3, 0x06), #.....: Jump if Protocol == TCP (0x06)
+            (0x28, 0, 0, 0x16) #............: Load Destination Port (offset 36)
+        ]
+        return parameters + port_parameters
+
+
+
+    def _create_port_filter(self) -> BPF_Instruction:
+        len_ports  = len(self._ports)
+        return [(0x15, 0, len_ports - i, port) for i, port in enumerate(self._ports)]
 
 
 
@@ -112,6 +107,7 @@ class Sniffer:
             sniffer.close()
 
 
+
 # Define a BPF filter structure
 class sock_filter(ctypes.Structure):
     _fields_ = [
@@ -120,6 +116,7 @@ class sock_filter(ctypes.Structure):
         ("jf", ctypes.c_ubyte),
         ("k", ctypes.c_uint),
     ]
+
 
 
 # Defines the structure of the complete BPF filter
@@ -133,5 +130,5 @@ class sock_fprog(ctypes.Structure):
 
 
 if __name__ == "__main__":
-    x = Sniffer("wlp2s0", [22])
+    x = Sniffer("wlp2s0", 'IP', [443])
     x._sniff_ip_packets()

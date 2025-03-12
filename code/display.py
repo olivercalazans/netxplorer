@@ -4,18 +4,6 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-from typing import NewType
-
-
-
-# TYPE HITS -------------------------------------------------------------------
-
-RawPacket = NewType("RawPacket", bytes)
-
-
-
-# FUNCTIONS -------------------------------------------------------------------
-
 def green(message:str) -> str:
     return '\033[32m' + message + '\033[0m'
 
