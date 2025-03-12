@@ -58,7 +58,7 @@ class Sniffer:
             (0x15, 0, num + 4, 0x0800), #...: Jump if EtherType == IPv4 (0x0800)
             (0x30, 0, 0, 0x09), #...........: Load IP Protocol (offset 9)
             (0x15, 0, num + 2, 0x06), #.....: Jump if Protocol == TCP (0x06)
-            (0x28, 0, 0, 0x22) #............: Load Destination Port (offset 36)
+            (0x28, 0, 0, 0x24) #............: Load Destination Port (offset 36)
         ]
         return parameters + port_parameters
 
