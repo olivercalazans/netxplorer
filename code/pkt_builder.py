@@ -5,15 +5,15 @@
 
 
 import socket, struct, random
-from display import RawPacket
+from type_hints import Raw_Packet
 
 
 # PACKET BUILDERS --------------------------------------------------------------------------------------------
 
-def create_tcp_packet(dst_ip:str, port:int, src_ip:str) -> RawPacket:
+def create_tcp_packet(dst_ip:str, port:int, src_ip:str) -> Raw_Packet:
     ip_header  = IP(dst_ip, src_ip, socket.IPPROTO_TCP)
     tcp_header = TCP(dst_ip, port, src_ip)
-    return RawPacket(ip_header + tcp_header)
+    return Raw_Packet(ip_header + tcp_header)
 
 
 
