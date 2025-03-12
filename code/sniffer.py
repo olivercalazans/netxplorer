@@ -22,6 +22,7 @@ class Sniffer:
         sniffer.bind((self._interface, 0))
 
         bpf_filter = self._define_filter()
+        print(bpf_filter)
 
         filter_array = (sock_filter * len(bpf_filter))()
         for i, (code, jt, jf, k) in enumerate(bpf_filter):
@@ -44,8 +45,8 @@ class Sniffer:
         }
         filter  = [(0x28, 0, 0, 0x0000000c)] #....: Load EtherType (offset 12)
         filter += FILTERS.get(self._protocol) #...: Specific parameters
-        filter += [(0x06, 0, 0, 0x0000), #........: Discard packet
-                   (0x06, 0, 0, 0xFFFF)] #........: Accept packet
+        filter += [(0x06, 0, 0, 0xFFFF), #........: Accept packet
+                   (0x06, 0, 0, 0x0000)] #........: Discard packet
         return filter
 
 
@@ -54,10 +55,10 @@ class Sniffer:
         port_parameters = self._create_port_filter()
         num             = len(port_parameters)
         parameters      = [
-            (0x15, 0, num + 3, 0x0800), #...: Jump if EtherType == IPv4 (0x0800)
+            (0x15, 0, num + 4, 0x0800), #...: Jump if EtherType == IPv4 (0x0800)
             (0x30, 0, 0, 0x09), #...........: Load IP Protocol (offset 9)
-            (0x15, 0, num + 1, 0x06), #.....: Jump if Protocol == TCP (0x06)
-            (0x28, 0, 0, 0x16) #............: Load Destination Port (offset 36)
+            (0x15, 0, num + 2, 0x06), #.....: Jump if Protocol == TCP (0x06)
+            (0x28, 0, 0, 0x22) #............: Load Destination Port (offset 36)
         ]
         return parameters + port_parameters
 
@@ -65,7 +66,7 @@ class Sniffer:
 
     def _create_port_filter(self) -> BPF_Instruction:
         len_ports  = len(self._ports)
-        return [(0x15, len_ports - i, 0, port) for i, port in enumerate(self._ports)]
+        return [(0x15, len_ports - i , 0, port) for i, port in enumerate(self._ports)]
 
 
 
@@ -130,6 +131,5 @@ class sock_fprog(ctypes.Structure):
 
 
 if __name__ == "__main__":
-    x = Sniffer("wlp2s0", 'IP', [443, 88, 80, 22, 23, 21])
-    z = x._create_port_filter()
-    print(z)
+    x = Sniffer("wlp2s0", 'IP', [22])
+    z = x._sniff_ip_packets()
