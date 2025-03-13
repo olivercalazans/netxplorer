@@ -43,7 +43,7 @@ class Sniffer:
             'IP':  self._get_ip_filter_parameters(),
             'ARP': [(0x15, 0, 3, 0x0806)] #.......: Jump if EtherType == ARP (0x0806)
         }
-        filter  = [(0x28, 0, 0, 0x0000000c)] #....: Load EtherType (offset 12)
+        filter  = [(0x28, 0, 0, 12)] #............: Load EtherType (offset 12)
         filter += FILTERS.get(self._protocol) #...: Specific parameters
         filter += [(0x06, 0, 0, 0xFFFF), #........: Accept packet
                    (0x06, 0, 0, 0x0000)] #........: Discard packet
@@ -55,18 +55,23 @@ class Sniffer:
         port_parameters = self._create_port_filter()
         num             = len(port_parameters)
         parameters      = [
-            (0x15, 0, num + 4, 0x0800), #...: Jump if EtherType == IPv4 (0x0800)
-            (0x30, 0, 0, 0x09), #...........: Load IP Protocol (offset 9)
-            (0x15, 0, num + 2, 0x06), #.....: Jump if Protocol == TCP (0x06)
-            (0x28, 0, 0, 0x24) #............: Load Destination Port (offset 36)
+            (0x15, 0, num + 4, 2048), #...: Jump if EtherType == IPv4
+            (0x30, 0, 0, 23), #...........: Load IP Protocol
+            (0x15, 0, num + 2, 6), #......: Jump if Protocol == TCP
+            (0x28, 0, 0, 36) #............: Load Destination Port
         ]
         return parameters + port_parameters
 
 
 
     def _create_port_filter(self) -> BPF_Instruction:
-        len_ports  = len(self._ports)
-        return [(0x15, len_ports - i , 0, port) for i, port in enumerate(self._ports)]
+        len_ports       = len(self._ports)
+        port_parameters = list()
+        for i, port in enumerate(self._ports):
+            true_jump  = len_ports - (i+1)
+            false_jump = 0 if i + 1 < len_ports else 1 
+            port_parameters.append((0x15, true_jump, false_jump, port))
+        return port_parameters
 
 
 
@@ -131,5 +136,5 @@ class sock_fprog(ctypes.Structure):
 
 
 if __name__ == "__main__":
-    x = Sniffer("wlp2s0", 'IP', [22])
+    x = Sniffer("wlp2s0", 'IP', [0x04d2])
     z = x._sniff_ip_packets()
