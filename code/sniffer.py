@@ -22,7 +22,6 @@ class Sniffer:
         sniffer.bind((self._interface, 0))
 
         bpf_filter = self._define_filter()
-        print(bpf_filter)
 
         filter_array = (sock_filter * len(bpf_filter))()
         for i, (code, jt, jf, k) in enumerate(bpf_filter):
