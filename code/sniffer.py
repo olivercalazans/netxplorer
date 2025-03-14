@@ -4,8 +4,9 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket, ctypes, struct
-from type_hints import BPF_Instruction, BPF_Configured_Socket
+import socket, ctypes
+from pkt_dissector import dissect_tcp_ip_packet
+from type_hints    import BPF_Instruction, BPF_Configured_Socket
 
 
 class Sniffer:
@@ -77,35 +78,10 @@ class Sniffer:
     def _sniff_ip_packets(self):
         sniffer = self._sniffer()
         try:
+            packet_info = list()
             while True:
-                # Captura um pacote
                 packet, _ = sniffer.recvfrom(65535)
-
-                # Extrai o cabeçalho Ethernet (14 bytes)
-                eth_header = packet[:14]
-                eth_protocol = struct.unpack('!H', eth_header[12:14])[0]
-
-                # Verifica se o protocolo Ethernet é IP (0x0800)
-                if eth_protocol == 0x0800:
-                    # Extrai o cabeçalho IP (20 bytes)
-                    ip_header = packet[14:34]
-
-                    # Desempacota o cabeçalho IP
-                    iph = struct.unpack('!BBHHHBBH4s4s', ip_header)
-
-                    version_ihl = iph[0]
-                    version = version_ihl >> 4
-                    ihl = version_ihl & 0xF
-
-                    iph_length = ihl * 4
-
-                    ttl = iph[5]
-                    protocol = iph[6]
-                    s_addr = socket.inet_ntoa(iph[8])
-                    d_addr = socket.inet_ntoa(iph[9])
-
-                    print(f"IP Packet: Source: {s_addr}, Destination: {d_addr}, Protocol: {protocol}, TTL: {ttl}")
-
+                dissect_tcp_ip_packet(packet)
         except KeyboardInterrupt:
             print("\nSniffing stopped.")
         finally:
