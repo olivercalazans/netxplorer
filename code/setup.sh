@@ -50,6 +50,7 @@ FILES=("arg_parser.py"                           # List of required Python scrip
        "netmap.py"
        "network.py"
        "pkt_builder.py"
+       "pkt_dissector.py"
        "pkt_sender.py"
        "pscan.py"
        "pscan_decoy.py"
