@@ -81,7 +81,8 @@ class Sniffer:
             packet_info = list()
             while True:
                 packet, _ = sniffer.recvfrom(65535)
-                Dissector(packet)._dissect_tcp_ip_packet()
+                result = Dissector(packet)._dissect_tcp_ip_packet()
+                print(f"IP Packet: Source: {result['ip']}, Source Port: {result['port']}, Flags {result['flags']}")
         except KeyboardInterrupt:
             print("\nSniffing stopped.")
         finally:
