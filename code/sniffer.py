@@ -40,7 +40,12 @@ class Sniffer:
 
     def _define_filter(self) -> BPF_Instruction:
         FILTERS = {
-            'IP':  self._get_ip_filter_parameters(),
+            'IP':  [
+                (0x15, 0, 3, 0x0800), #...: Jump if EtherType == IPv4
+                (0x30, 0, 0, 0x09), #.....: Load IP Protocol
+                (0x15, 0, 1, 0x06), #.....: Jump if Protocol == TCP
+            ],
+
             'ARP': [(0x15, 0, 3, 0x0806)] #.......: Jump if EtherType == ARP (0x0806)
         }
         filter  = [(0x28, 0, 0, 0x0000000c)] #....: Load EtherType (offset 12)
@@ -48,25 +53,6 @@ class Sniffer:
         filter += [(0x06, 0, 0, 0xFFFF), #........: Accept packet
                    (0x06, 0, 0, 0x0000)] #........: Discard packet
         return filter
-
-
-
-    def _get_ip_filter_parameters(self) -> BPF_Instruction:
-        port_parameters = self._create_port_filter()
-        num             = len(port_parameters)
-        parameters      = [
-            (0x15, 0, num + 4, 0x0800), #...: Jump if EtherType == IPv4 (0x0800)
-            (0x30, 0, 0, 0x09), #...........: Load IP Protocol (offset 9)
-            (0x15, 0, num + 2, 0x06), #.....: Jump if Protocol == TCP (0x06)
-            (0x28, 0, 0, 0x24) #............: Load Destination Port (offset 36)
-        ]
-        return parameters + port_parameters
-
-
-
-    def _create_port_filter(self) -> BPF_Instruction:
-        len_ports  = len(self._ports)
-        return [(0x15, len_ports - i , 0, port) for i, port in enumerate(self._ports)]
 
 
 
@@ -102,10 +88,24 @@ class Sniffer:
 
                     print(f"IP Packet: Source: {s_addr}, Destination: {d_addr}, Protocol: {protocol}, TTL: {ttl}")
 
+                    # Verifica se o protocolo é TCP (0x06)
+                    if protocol == 6:
+                        # Extrai o cabeçalho TCP (20 bytes)
+                        tcp_header = packet[14 + iph_length:14 + iph_length + 20]
+
+                        # Desempacota o cabeçalho TCP
+                        tcph = struct.unpack('!HHLLBBHHH', tcp_header)
+
+                        source_port = tcph[0]
+                        dest_port = tcph[1]
+
+                        print(f"TCP Packet: Source Port: {source_port}, Destination Port: {dest_port}")
+
         except KeyboardInterrupt:
             print("\nSniffing stopped.")
         finally:
             sniffer.close()
+
 
 
 
@@ -131,5 +131,5 @@ class sock_fprog(ctypes.Structure):
 
 
 if __name__ == "__main__":
-    x = Sniffer("wlp2s0", 'IP', [22])
+    x = Sniffer("wlp2s0", 'IP', [1234])
     z = x._sniff_ip_packets()
