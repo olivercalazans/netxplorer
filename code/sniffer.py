@@ -5,7 +5,7 @@
 
 
 import socket, ctypes
-from pkt_dissector import dissect_tcp_ip_packet
+from pkt_dissector import Dissector
 from type_hints    import BPF_Instruction, BPF_Configured_Socket
 
 
@@ -81,7 +81,7 @@ class Sniffer:
             packet_info = list()
             while True:
                 packet, _ = sniffer.recvfrom(65535)
-                dissect_tcp_ip_packet(packet)
+                Dissector(packet)._dissect_tcp_ip_packet()
         except KeyboardInterrupt:
             print("\nSniffing stopped.")
         finally:
