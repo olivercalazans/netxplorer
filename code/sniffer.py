@@ -11,11 +11,12 @@ from type_hints    import BPF_Instruction, BPF_Configured_Socket
 
 class Sniffer:
 
+    __slots__ = ('_interface', '_protocol', '_ports')
+
     def __init__(self, interface:str, protocol:str, ports:list=None) -> None:
         self._interface:str   = interface
         self._protocol:str    = protocol
         self._ports:list[int] = ports
-
 
 
     def _sniffer(self) -> BPF_Configured_Socket:
@@ -81,8 +82,8 @@ class Sniffer:
             packet_info = list()
             while True:
                 packet, _ = sniffer.recvfrom(65535)
-                result = Dissector(packet)._dissect_tcp_ip_packet()
-                print(f"IP Packet: Source: {result['ip']}, Source Port: {result['port']}, Flags {result['flags']}")
+                result = Dissector()._dissect([packet])
+                print(result)
         except KeyboardInterrupt:
             print("\nSniffing stopped.")
         finally:
