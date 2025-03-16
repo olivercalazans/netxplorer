@@ -10,6 +10,13 @@ from type_hints import Raw_Packet
 
 class Dissector:
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+
     FLAG_MAP = {
             0b00010010: "SA",  # SYN-ACK (0b00000010 + 0b00010000)
             0b00000010: "S",   # SYN
@@ -17,6 +24,7 @@ class Dissector:
             0b00000100: "R",   # RST
             0b00000001: "F"    # FIN
         }
+
 
     __slots__ = ('_packet', '_ip_header', '_tcp_header', '_source_ip', '_source_port', '_flags')
 

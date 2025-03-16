@@ -11,6 +11,13 @@ from type_hints    import BPF_Instruction, BPF_Configured_Socket
 
 class Sniffer:
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+
     __slots__ = ('_interface', '_protocol', '_ports')
 
     def __init__(self, interface:str, protocol:str, ports:list=None) -> None:
@@ -108,10 +115,3 @@ class sock_fprog(ctypes.Structure):
         ("len", ctypes.c_ushort),
         ("filter", ctypes.POINTER(sock_filter)),
     ]
-
-
-
-
-if __name__ == "__main__":
-    x = Sniffer("wlp2s0", 'IP', [0x04d2])
-    z = x._sniff_ip_packets()
