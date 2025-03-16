@@ -11,6 +11,13 @@ from type_hints import Raw_Packet
 
 class Packet:
 
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+
     PROTOCOLS = {
         'TCP': socket.IPPROTO_TCP,
         'UDP': socket.IPPROTO_ICMP,
