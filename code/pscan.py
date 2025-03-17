@@ -74,14 +74,14 @@ class Port_Scanner:
         with Normal_Scan(self._target_ip, list(self._ports.keys()), self._flags) as SCAN:
             self._responses = SCAN._perform_normal_methods()
 
-    
+
     def _perform_decoy_scan(self) -> None:
         self._prepare_ports()
         with Decoy(self._target_ip, list(self._ports.keys())) as DECOY:
             self._responses     = DECOY._perform_decoy_methods()
             self._flags['show'] = True
 
-    
+
     def _prepare_ports(self) -> None:
         if   self._flags['decoy']: self._ports = get_ports(self._flags['decoy'])
         elif self._flags['port']:  self._ports = get_ports(self._flags['port'])
