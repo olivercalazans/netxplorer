@@ -18,27 +18,21 @@ class Packet:
         return False
 
 
-    PROTOCOLS = {
-        'TCP': socket.IPPROTO_TCP,
-        'UDP': socket.IPPROTO_ICMP,
-    }
-
-    __slots__ = ('_protocol', '_src_ip', '_src_port', '_dst_ip', '_dst_port')
+    __slots__ = ('_src_ip', '_src_port', '_dst_ip', '_dst_port')
 
     def __init__(self, protocol):
-        self._protocol:int = self.PROTOCOLS.get(protocol, None)
         self._src_ip:str   = get_ip_address()
         self._src_port:int = None
         self._dst_ip:str   = None
         self._dst_port:int = None
 
 
-    def create_tcp_packet(self, dst_ip:str, dst_ports:list[int]) -> tuple[list[Raw_Packet], list[int]]:
+    def _create_tcp_packet(self, dst_ip:str, dst_ports:list[int]) -> tuple[list[Raw_Packet], list[int]]:
         packets = list()
         ports   = list()
         for port in dst_ports:
             self._set_packet_information(dst_ip, port)
-            ip_header  = self._IP()
+            ip_header  = self._IP(socket.IPPROTO_TCP)
             tcp_header = self._TCP()
             packets.append(Raw_Packet(ip_header + tcp_header))
             ports.append(self._src_port)
@@ -53,7 +47,7 @@ class Packet:
 
     # LAYERS -----------------------------------------------------------------------------------------------------
 
-    def _IP(self) -> bytes:
+    def _IP(self, protocol) -> bytes:
         return struct.pack('!BBHHHBBH4s4s',
                            (4 << 4) + 5, #.....................: IP version and IHL (Internet Header Length)
                            0, #................................: TOS (Type of Service)
@@ -61,7 +55,7 @@ class Packet:
                            random.randint(10000, 65535), #.....: IP ID
                            0, #................................: Flags and Fragment offset
                            64, #...............................: TLL (Time to Live)
-                           self._protocol, #...................: Protocol
+                           protocol, #.........................: Protocol
                            0, #................................: Checksum (Will be populated by the kernel)
                            socket.inet_aton(self._src_ip), #...: Source IP
                            socket.inet_aton(self._dst_ip) #....: Destiny IP

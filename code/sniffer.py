@@ -4,34 +4,48 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket, ctypes
+import socket, ctypes, time, asyncio
 from pkt_dissector import Dissector
+from network       import get_default_iface
 from type_hints    import BPF_Instruction, BPF_Configured_Socket
 
 
 class Sniffer:
 
-    def __enter__(self):
+    def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __aexit__(self, exc_type, exc_value, traceback):
         return False
 
 
-    __slots__ = ('_interface', '_protocol', '_ports')
 
-    def __init__(self, interface:str, protocol:str, ports:list=None) -> None:
-        self._interface:str   = interface
+    __slots__ = ('_protocol', '_ports')
+
+    def __init__(self, protocol:str, ports:list) -> None:
         self._protocol:str    = protocol
         self._ports:list[int] = ports
 
 
-    def _sniffer(self) -> BPF_Configured_Socket:
+
+    async def _sniff(self) -> list[dict]:
+        sniffer = self._create_sniffer()
+        packets = list()
+        start   = time.time()
+        while time.time() - start < 5:
+            packet, _ = sniffer.recvfrom(65535)
+            packets.append(packet)
+        sniffer.close()
+        
+        return self._process_packets(packets)
+
+
+
+    def _create_sniffer(self) -> BPF_Configured_Socket:
         sniffer = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
-        sniffer.bind((self._interface, 0))
+        sniffer.bind((get_default_iface(), 0))
 
-        bpf_filter = self._define_filter()
-
+        bpf_filter   = self._define_filter()
         filter_array = (sock_filter * len(bpf_filter))()
         for i, (code, jt, jf, k) in enumerate(bpf_filter):
             filter_array[i] = sock_filter(code, jt, jf, k)
@@ -60,19 +74,19 @@ class Sniffer:
 
 
     def _get_ip_filter_parameters(self) -> BPF_Instruction:
-        port_parameters = self._create_port_filter()
-        num             = len(port_parameters)
-        parameters      = [
+        port_jumps = self._create_port_jumps()
+        num        = len(port_jumps)
+        parameters = [
             (0x15, 0, num + 4, 2048), #...: Jump if EtherType == IPv4
             (0x30, 0, 0, 23), #...........: Load IP Protocol
             (0x15, 0, num + 2, 6), #......: Jump if Protocol == TCP
             (0x28, 0, 0, 36) #............: Load Destination Port
         ]
-        return parameters + port_parameters
+        return parameters + port_jumps
 
 
 
-    def _create_port_filter(self) -> BPF_Instruction:
+    def _create_port_jumps(self) -> BPF_Instruction:
         len_ports       = len(self._ports)
         port_parameters = list()
         for i, port in enumerate(self._ports):
@@ -83,18 +97,11 @@ class Sniffer:
 
 
 
-    def _sniff_ip_packets(self):
-        sniffer = self._sniffer()
-        try:
-            packet_info = list()
-            while True:
-                packet, _ = sniffer.recvfrom(65535)
-                result = Dissector()._dissect([packet])
-                print(result)
-        except KeyboardInterrupt:
-            print("\nSniffing stopped.")
-        finally:
-            sniffer.close()
+    @staticmethod
+    def _process_packets(packets) -> list[dict]:
+        with Dissector() as DISSECTOR:
+            return DISSECTOR._dissect(packets)
+
 
 
 
@@ -109,9 +116,12 @@ class sock_filter(ctypes.Structure):
 
 
 
+
 # Defines the structure of the complete BPF filter
 class sock_fprog(ctypes.Structure):
     _fields_ = [
         ("len", ctypes.c_ushort),
         ("filter", ctypes.POINTER(sock_filter)),
     ]
+
+print(Sniffer('IP', [1234])._sniff())

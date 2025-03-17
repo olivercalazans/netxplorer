@@ -5,53 +5,63 @@
 
 
 import random, socket
-from scapy.layers.inet import TCP
-from scapy.all         import conf, Packet
-from arg_parser        import Argument_Manager as ArgParser
-from pscan_normal      import Normal_Scan
-from pscan_decoy       import Decoy
-from network           import get_ports
-from display           import *
+from arg_parser   import Argument_Manager as ArgParser
+from pscan_normal import Normal_Scan
+from pscan_decoy  import Decoy
+from network      import get_ports
+from pkt_builder  import Packet
+from type_hints   import Raw_Packet
+from display      import *
 
 
 class Port_Scanner:
 
-    def __init__(self, parser_manager:ArgParser) -> None:
-        self._target_ip:str    = None
-        self._flags:dict       = None
-        self._ports:dict       = None
-        self._responses:Packet = None
-        self._get_argument_and_flags(parser_manager)
+    STATUS = {
+        'SYN-ACK':  green('Opened'),
+        'SYN':      yellow('Potentially Open'),
+        'RSTACK':   red('Closed'),
+        'FIN':      red('Connection Closed'),
+        'RST':      red('Reset'),
+        'Filtered': red('Filtered')
+    }
 
 
     def __enter__(self):
         return self
     
     def __exit__(self, exc_type, exc_value, traceback):
-        return False
+        return False    
 
 
-    def _execute(self) -> None:
-        try:
-            conf.verb = 0
-            self._get_result_by_transmission_method()
-            self._process_responses()
-        except KeyboardInterrupt:   print(f'\n{red("Process stopped")}')
-        except ValueError as error: print(f'{yellow("Error")}: {error}')
-        except Exception as error:  print(unexpected_error(error))
+    __slots__ = ('_target_ip', '_flags', '_ports', '_responses')
+
+    def __init__(self, parser_manager:ArgParser) -> None:
+        self._target_ip:str              = None
+        self._flags:dict                 = None
+        self._ports:dict                 = None
+        self._responses:list[Raw_Packet] = None
+        self._get_argument_and_flags(parser_manager)
 
 
     def _get_argument_and_flags(self, parser_manager:ArgParser) -> None:
         self._target_ip  = socket.gethostbyname(parser_manager.host)
         self._flags = {
-            'show':    parser_manager.show,
-            'port':    parser_manager.port,
-            'all':     parser_manager.all,
-            'random':  parser_manager.random,
-            'delay':   parser_manager.delay,
-            'stealth': parser_manager.stealth,
-            'decoy':   parser_manager.decoy,
+            'show':   parser_manager.show,
+            'port':   parser_manager.port,
+            'all':    parser_manager.all,
+            'random': parser_manager.random,
+            'delay':  parser_manager.delay,
+            'decoy':  parser_manager.decoy,
         }
+
+
+    def _execute(self) -> None:
+        try:
+            self._get_result_by_transmission_method()
+            self._display_result()
+        except KeyboardInterrupt:   print(f'\n{red("Process stopped")}')
+        except ValueError as error: print(f'{yellow("Error")}: {error}')
+        except Exception as error:  print(unexpected_error(error))
 
 
     def _get_result_by_transmission_method(self) -> list:
@@ -83,22 +93,11 @@ class Port_Scanner:
             self._ports = dict(random_list)
 
 
-    def _process_responses(self) -> None:
-        for sent, received in self._responses:
-            port        = sent[TCP].dport if not isinstance(sent[TCP].dport, list) else sent[TCP].dport[0]
-            flag        = received[TCP].flags if received else None
+    def _display_result(self) -> None:
+        for pkt_info in self._responses:
+            flag        = pkt_info['flags']
+            status      = self.STATUS.get(flag)
+            port        = pkt_info['port']
             description = self._ports[port]
-            self._display_result(flag, port, description)
-
-
-    def _display_result(self, flag:str|None, port:int, description:str) -> None:
-        match flag:
-            case "SA": status = green('Opened')
-            case "S":  status = yellow('Potentially Open')
-            case "RA": status = red('Closed')
-            case "F":  status = red('Connection Closed')
-            case "R":  status = red('Reset')
-            case None: status = red('Filtered')
-            case _:    status = red('Unknown Status')
-        if flag == 'SA' or self._flags['show']:
-            print(f'Status: {status:>17} -> {port:>5} - {description}')
+            if flag == 'SYN-ACK' or self._flags['show']:
+                print(f'Status: {status:>17} -> {port:>5} - {description}')

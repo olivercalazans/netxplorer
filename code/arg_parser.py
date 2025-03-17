@@ -40,7 +40,6 @@ class Argument_Manager:
                 ('value', '-p', '--port',    str, 'Specify a port to scan'),
                 ('bool',  '-a', '--all',     'Scan all ports'),
                 ('opt',   '-d', '--delay',   'Add a delay between packet transmissions'),
-                ('bool',  '-S', '--stealth', 'Use only one packet with "SYN" flag'),
                 ('value', '-D', '--decoy',   str, 'Uses decoy method'),
                 ],
             

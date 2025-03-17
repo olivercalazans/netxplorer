@@ -4,68 +4,54 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import threading, sys, time, random
-from scapy.layers.inet import IP, TCP, UDP
-from scapy.sendrecv    import sr1, sr, send
-from scapy.packet      import Packet
+import threading, sys, time, random, asyncio
+from pkt_builder import Packet
+from pkt_sender  import send_layer_3_packet
+from sniffer     import Sniffer
+from type_hints  import Raw_Packet
 
 
 class Normal_Scan:
 
-    def __init__(self, target_ip, ports, arg_flags) -> None:
-        self._target_ip:str   = target_ip
-        self._ports:list|int  = ports
-        self._arg_flags:dict  = arg_flags
-        self._packets:list    = [self._create_tcp_syn_packet(port) for port in self._ports]
-        self._delay:int|float = None
-        self._lock            = threading.Lock()
-        self._responses:list  = list()
-
-
     def __enter__(self):
         return self
-    
+
     def __exit__(self, exc_type, exc_value, traceback):
         return False
 
 
+    __slots__ = ('_target_ip', '_target_ports', '_arg_flags', '_packets', '_ports_to_sniff', '_delay', '_lock', '_responses')
+
+    def __init__(self, target_ip, ports, arg_flags) -> None:
+        self._target_ip:str             = target_ip
+        self._target_ports:list[int]    = ports
+        self._arg_flags:dict            = arg_flags
+        self._packets:list[Raw_Packet]  = None
+        self._ports_to_sniff:list[int]  = None
+        self._delay:str                 = None
+        self._lock                      = threading.Lock()
+        self._responses:list[dict]      = list()
+        self._sniffer_task:asyncio.Task = None
+
+
     def _perform_normal_methods(self) -> None:
-        if   self._arg_flags['delay']:   self._sendings_with_delay()
-        elif self._arg_flags['stealth']: self._responses = self._send_packets()
-        else:                            self._send_tcp_handshake_packets()
-        return self._responses
+        self._create_packets()
+        if self._arg_flags['delay']:
+            return self._sendings_with_delay()
+        return self._send_packets()
 
 
-    # PACKETS ------------------------------------------------------------------------------------------------
+    def _create_packets(self) -> None:
+        self._packets, self._ports_to_sniff = Packet._create_tcp_packet(self._target_ip, self._target_ports)
 
-    def _create_tcp_syn_packet(self, port:int) -> Packet:
-        return IP(dst=self._target_ip) / TCP(dport=port, flags="S")
-    
-    def _create_tcp_ack_packet(self, port:int, ack:int, seq:int) -> Packet:
-        return IP(dst=self._target_ip) / TCP(dport=port, flags="A", seq=ack, ack=seq + 1)
-    
-    def _create_tcp_fin_packet(self, port:int) -> Packet:
-        return IP(dst=self._target_ip) / TCP(dport=port, flags="FA")
 
-    def _create_udp_packet(self, port:int) -> Packet:
-        return IP(dst=self._target_ip, ttl=64) / UDP(dport=port)
+    def _start_sniffing(self) -> None:
+        self._sniffer_task = asyncio.create_task(Sniffer('IP', self._ports_to_sniff)._sniff())
 
-    
-    # NORMAL SENDING -----------------------------------------------------------------------------------------
 
-    def _send_packets(self) -> list[Packet]:
-        responses, _ = sr(self._packets, inter=0.1, timeout=3, verbose=0)
-        return responses
-
-    
-    def _send_tcp_handshake_packets(self) -> None:
-        responses   = self._send_packets()
-        ack_packets = [self._create_tcp_ack_packet(pkt[TCP].sport, pkt.seq, pkt.ack) for _, pkt in responses]
-        fin_packets = [self._create_tcp_fin_packet(pkt[TCP].sport) for _, pkt in responses]
-        send(ack_packets, verbose=0)
-        time.sleep(1)
-        send(fin_packets, verbose=0)
-        self._responses = responses
+    async def _send_packets(self) -> list[Packet]:
+        for packet, target_port in zip(self._packets, self._target_ports):
+            await send_layer_3_packet(packet, self._target_ip, target_port)
 
 
     # DELAY METHODS ------------------------------------------------------------------------------------------
@@ -98,7 +84,9 @@ class Normal_Scan:
         return [values[0] for _ in range(len(self._packets))]
 
 
+    """
     def _async_send_packet(self, packet:Packet) -> None:
         response = sr1(packet, timeout=3, verbose=0)
         with self._lock:
             self._responses.append((packet, response))
+    """
