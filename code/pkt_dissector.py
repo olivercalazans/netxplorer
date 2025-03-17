@@ -18,11 +18,11 @@ class Dissector:
 
 
     FLAG_MAP = {
-            0b00010010: "SA",  # SYN-ACK (0b00000010 + 0b00010000)
-            0b00000010: "S",   # SYN
-            0b00010100: "RA",  # RST-ACK (0b00000100 + 0b00010000)
-            0b00000100: "R",   # RST
-            0b00000001: "F"    # FIN
+            0b00010010: 'SYN-ACK', # (0b00000010 + 0b00010000)
+            0b00000010: 'SYN',
+            0b00010100: 'RST-ACK', # RST-ACK (0b00000100 + 0b00010000)
+            0b00000100: 'RST',
+            0b00000001: 'FIN'
         }
 
 
@@ -77,4 +77,4 @@ class Dissector:
 
     def _get_tcp_flags(self) -> None:
         flags       = self._tcp_header[5]
-        self._flags = self.FLAG_MAP.get(flags & (0b00111111), None)
+        self._flags = self.FLAG_MAP.get(flags & (0b00111111), 'Filtered')
