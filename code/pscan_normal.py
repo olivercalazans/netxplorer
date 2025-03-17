@@ -23,30 +23,36 @@ class Normal_Scan:
     __slots__ = ('_target_ip', '_target_ports', '_arg_flags', '_packets', '_ports_to_sniff', '_delay', '_lock', '_responses')
 
     def __init__(self, target_ip, ports, arg_flags) -> None:
-        self._target_ip:str             = target_ip
-        self._target_ports:list[int]    = ports
-        self._arg_flags:dict            = arg_flags
-        self._packets:list[Raw_Packet]  = None
-        self._ports_to_sniff:list[int]  = None
-        self._delay:str                 = None
-        self._lock                      = threading.Lock()
-        self._responses:list[dict]      = list()
-        self._sniffer_task:asyncio.Task = None
+        self._target_ip:str            = target_ip
+        self._target_ports:list[int]   = ports
+        self._arg_flags:dict           = arg_flags
+        self._packets:list[Raw_Packet] = None
+        self._ports_to_sniff:list[int] = None
+        self._delay:str                = None
+        self._lock                     = threading.Lock()
+        self._responses:list[dict]     = list()
 
 
     def _perform_normal_methods(self) -> None:
         self._create_packets()
-        if self._arg_flags['delay']:
-            return self._sendings_with_delay()
-        return self._send_packets()
+        #if self._arg_flags['delay']:
+        #    return self._sendings_with_delay()
+        return self._call_send_and_receive()
 
 
     def _create_packets(self) -> None:
-        self._packets, self._ports_to_sniff = Packet._create_tcp_packet(self._target_ip, self._target_ports)
+        self._packets, self._ports_to_sniff = Packet()._create_tcp_packet(self._target_ip, self._target_ports)
 
 
-    def _start_sniffing(self) -> None:
-        self._sniffer_task = asyncio.create_task(Sniffer('IP', self._ports_to_sniff)._sniff())
+    @staticmethod
+    def _call_send_and_receive() -> None:
+        asyncio.run(Normal_Scan._send_and_receive_packets())
+
+
+    async def _send_and_receive_packets(self) -> None:
+        async with Sniffer('IP', self._ports_to_sniff) as sniffer:
+            await self._send_packets()
+            self._responses = await sniffer._get_packets()
 
 
     async def _send_packets(self) -> list[Packet]:
@@ -54,6 +60,11 @@ class Normal_Scan:
             await send_layer_3_packet(packet, self._target_ip, target_port)
 
 
+x = Normal_Scan('192.168.1.1', [22, 23, 443, 445], {'ok': 1234})
+z = x._perform_normal_methods()
+print(z)
+
+"""
     # DELAY METHODS ------------------------------------------------------------------------------------------
 
     def _sendings_with_delay(self) -> None:
@@ -84,7 +95,6 @@ class Normal_Scan:
         return [values[0] for _ in range(len(self._packets))]
 
 
-    """
     def _async_send_packet(self, packet:Packet) -> None:
         response = sr1(packet, timeout=3, verbose=0)
         with self._lock:
