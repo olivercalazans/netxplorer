@@ -130,7 +130,7 @@ class Port_Scanner:
     def _get_delay_time_list(self) -> list[int]:
         if self._args['delay'] is False:
             return [0 for _ in range(len(self._packets))]
-        elif self._args['delay'] is True:
+        elif self._args['delay'] is True or self._args['decoy']:
             return [0] + [random.uniform(1, 3) for _ in range(len(self._packets) - 1)]
 
         values = [float(value) for value in self._args['delay'].split('-')]
