@@ -110,14 +110,14 @@ class Port_Scanner:
         with Sniffer('IP', self._ports_to_sniff) as sniffer:
             self._send_packets()
             time.sleep(3)
-            return sniffer._get_result()
+            self._responses = sniffer._get_result()
 
 
 
     def _send_packets(self) -> None:
         delay_list = self._get_delay_time_list()
         index      = 1
-        for delay, packet, port in zip(delay_list, self._packets, self._target_ports.values()):
+        for delay, packet, port in zip(delay_list, self._packets, self._target_ports.keys()):
             send_layer_3_packet(packet, self._target_ip, port)
             sys.stdout.write(f'\rPacket sent: {index}/{len(self._packets)} >> delay {delay:.2f}')
             sys.stdout.flush()
@@ -142,9 +142,10 @@ class Port_Scanner:
 
     def _display_result(self) -> None:
         for pkt_info in self._responses:
+            if pkt_info['flags'] != 'SYN-ACK' and not self._args['show']:
+                continue
             flags       = pkt_info['flags']
             status      = self.STATUS.get(flags)
             port        = pkt_info['port']
             description = self._target_ports[port]
-            if flags == 'SYN-ACK' or self._args['show']:
-                print(f'Status: {status:>17} -> {port:>5} - {description}')
+            print(f'Status: {status:>17} -> {port:>5} - {description}')
