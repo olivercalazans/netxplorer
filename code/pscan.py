@@ -4,14 +4,15 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import random, socket
-from arg_parser   import Argument_Manager as ArgParser
-from pscan_normal import Normal_Scan
-from pscan_decoy  import Decoy
-from network      import get_ports
-from pkt_builder  import Packet
-from type_hints   import Raw_Packet
-from display      import *
+import socket, random, time, sys
+from arg_parser  import Argument_Manager as ArgParser
+from sniffer     import Sniffer
+from pscan_decoy import Decoy
+from network     import get_ports
+from pkt_sender  import send_layer_3_packet
+from pkt_builder import Packet
+from type_hints  import Raw_Packet
+from display     import *
 
 
 class Port_Scanner:
@@ -25,27 +26,28 @@ class Port_Scanner:
         'Filtered': red('Filtered')
     }
 
+    __slots__ = ('_target_ip', '_flags', '_target_ports', '_ports_to_sniff', '_packets', '_responses')
+
+    def __init__(self, parser_manager:ArgParser) -> None:
+        self._target_ip:str            = None
+        self._args:dict                = None
+        self._target_ports:dict        = None
+        self._ports_to_sniff:list[int] = None
+        self._packets:list[Raw_Packet] = None
+        self._responses:list[dict]     = None
+        self._get_argument_and_flags(parser_manager)
+
 
     def __enter__(self):
         return self
     
     def __exit__(self, exc_type, exc_value, traceback):
-        return False    
-
-
-    __slots__ = ('_target_ip', '_flags', '_ports', '_responses')
-
-    def __init__(self, parser_manager:ArgParser) -> None:
-        self._target_ip:str              = None
-        self._flags:dict                 = None
-        self._ports:dict                 = None
-        self._responses:list[Raw_Packet] = None
-        self._get_argument_and_flags(parser_manager)
+        return False
 
 
     def _get_argument_and_flags(self, parser_manager:ArgParser) -> None:
         self._target_ip  = socket.gethostbyname(parser_manager.host)
-        self._flags = {
+        self._args = {
             'show':   parser_manager.show,
             'port':   parser_manager.port,
             'all':    parser_manager.all,
@@ -57,47 +59,73 @@ class Port_Scanner:
 
     def _execute(self) -> None:
         try:
-            self._get_result_by_transmission_method()
+            self._prepare_ports()
+            self._create_packets()
+            self._send_and_receive()
             self._display_result()
         except KeyboardInterrupt:   print(f'\n{red("Process stopped")}')
         except ValueError as error: print(f'{yellow("Error")}: {error}')
         except Exception as error:  print(unexpected_error(error))
 
 
-    def _get_result_by_transmission_method(self) -> list:
-        if self._flags['decoy']: self._perform_decoy_scan()
-        else:                    self._perform_normal_scan()
+    def _prepare_ports(self) -> None:
+        if   self._args['decoy']: self._target_ports = get_ports(self._args['decoy'])
+        elif self._args['port']:  self._target_ports = get_ports(self._args['port'])
+        elif self._args['all']:   self._target_ports = get_ports()
+        else:                     self._target_ports = get_ports('common')
 
-    
-    def _perform_normal_scan(self) -> None:
-        self._prepare_ports()
-        with Normal_Scan(self._target_ip, list(self._ports.keys()), self._flags) as SCAN:
-            self._responses = SCAN._perform_normal_methods()
+        if self._args['random']:
+            random_list        = random.sample(list(self._target_ports.items()), len(self._target_ports))
+            self._target_ports = dict(random_list)
+
+
+    def _create_packets(self) -> None:
+        self._packets, self._ports_to_sniff = Packet()._create_tcp_packet(self._target_ip, self._target_ports)
+
+
+    def _send_and_receive(self) -> None:
+        with Sniffer('IP', self._ports_to_sniff) as sniffer:
+            self._send_packets()
+            time.sleep(3)
+            return sniffer._get_result()
+
+
+    def _send_packets(self) -> None:
+        delay_list = self._get_delay_time_list()
+        index      = 1
+        for delay, packet, port in zip(delay_list, self._packets, self._target_ports.values()):
+            time.sleep(delay)
+            send_layer_3_packet(packet, self._target_ip, port)
+            sys.stdout.write(f'\rPacket sent: {index}/{len(self._packets)}')
+            sys.stdout.flush()
+            index += 1
+        print('\n')
+
+
+    def _get_delay_time_list(self) -> list[int]:
+        if self._args['delay'] is False:
+            return [0 for _ in range(len(self._packets))]
+        elif self._args['delay'] is True:
+            return [0] + [random.uniform(1, 3) for _ in range(len(self._packets) - 1)]
+
+        values = [float(value) for value in self._args['delay'].split('-')]
+        if len(values) > 1:
+            return [0] + [random.uniform(values[0], values[1]) for _ in range(len(self._packets) - 1)]
+        return [0] + [values[0] for _ in range(len(self._packets) - 1)]
 
 
     def _perform_decoy_scan(self) -> None:
         self._prepare_ports()
-        with Decoy(self._target_ip, list(self._ports.keys())) as DECOY:
-            self._responses     = DECOY._perform_decoy_methods()
-            self._flags['show'] = True
-
-
-    def _prepare_ports(self) -> None:
-        if   self._flags['decoy']: self._ports = get_ports(self._flags['decoy'])
-        elif self._flags['port']:  self._ports = get_ports(self._flags['port'])
-        elif self._flags['all']:   self._ports = get_ports()
-        else:                      self._ports = get_ports('common')
-
-        if self._flags['random']:
-            random_list = random.sample(list(self._ports.items()), len(self._ports))
-            self._ports = dict(random_list)
+        with Decoy(self._target_ip, list(self._target_ports.keys())) as DECOY:
+            self._responses    = DECOY._perform_decoy_methods()
+            self._args['show'] = True
 
 
     def _display_result(self) -> None:
         for pkt_info in self._responses:
-            flag        = pkt_info['flags']
-            status      = self.STATUS.get(flag)
+            flags       = pkt_info['flags']
+            status      = self.STATUS.get(flags)
             port        = pkt_info['port']
-            description = self._ports[port]
-            if flag == 'SYN-ACK' or self._flags['show']:
+            description = self._target_ports[port]
+            if flags == 'SYN-ACK' or self._args['show']:
                 print(f'Status: {status:>17} -> {port:>5} - {description}')
