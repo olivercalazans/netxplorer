@@ -6,7 +6,7 @@
 
 import sys
 from arg_parser import Argument_Manager as ArgParser
-from pscan      import Port_Scanner
+from port_scan  import Port_Scanner
 from bgrab      import Banner_Grabbing
 from netmap     import Network_Mapper
 from display    import *
