@@ -25,7 +25,7 @@ class Port_Scanner:
         'Filtered': red('Filtered')
     }
 
-    __slots__ = ('_target_ip', '_flags', '_target_ports', '_ports_to_sniff', '_packets', '_responses')
+    __slots__ = ('_target_ip', '_args', '_target_ports', '_ports_to_sniff', '_packets', '_responses')
 
     def __init__(self, parser_manager:ArgParser) -> None:
         self._target_ip:str            = None
@@ -118,10 +118,10 @@ class Port_Scanner:
         delay_list = self._get_delay_time_list()
         index      = 1
         for delay, packet, port in zip(delay_list, self._packets, self._target_ports.values()):
-            time.sleep(delay)
             send_layer_3_packet(packet, self._target_ip, port)
-            sys.stdout.write(f'\rPacket sent: {index}/{len(self._packets)}')
+            sys.stdout.write(f'\rPacket sent: {index}/{len(self._packets)} >> delay {delay:.2f}')
             sys.stdout.flush()
+            time.sleep(delay)
             index += 1
         print('\n')
 
@@ -129,14 +129,14 @@ class Port_Scanner:
 
     def _get_delay_time_list(self) -> list[int]:
         if self._args['delay'] is False:
-            return [0 for _ in range(len(self._packets))]
+            return [0.01 for _ in range(len(self._packets) - 1)] + [2.0]
         elif self._args['delay'] is True or self._args['decoy']:
-            return [0] + [random.uniform(1, 3) for _ in range(len(self._packets) - 1)]
+            return [random.uniform(1, 3) for _ in range(len(self._packets))]
 
         values = [float(value) for value in self._args['delay'].split('-')]
         if len(values) > 1:
-            return [0] + [random.uniform(values[0], values[1]) for _ in range(len(self._packets) - 1)]
-        return [0] + [values[0] for _ in range(len(self._packets) - 1)]
+            return [random.uniform(values[0], values[1]) for _ in range(len(self._packets))]
+        return [values[0] for _ in range(len(self._packets))]
 
 
 
