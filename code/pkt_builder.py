@@ -5,7 +5,7 @@
 
 
 import socket, struct, random
-from network    import get_ip_address
+from network    import get_my_ip_address
 from type_hints import Raw_Packet
 
 
@@ -14,7 +14,7 @@ class Packet:
     __slots__ = ('_src_ip', '_src_port', '_dst_ip', '_dst_port', '_protocol')
 
     def __init__(self):
-        self._src_ip:str   = get_ip_address()
+        self._src_ip:str   = get_my_ip_address()
         self._src_port:int = None
         self._dst_ip:str   = None
         self._dst_port:int = None
@@ -28,23 +28,36 @@ class Packet:
         return False
 
 
-    def _create_tcp_packet(self, dst_ip:str, dst_ports:list[int]) -> tuple[list[Raw_Packet], list[int]]:
+    def _get_tcp_packets(self, dst_ip:str, dst_ports:list[int]) -> tuple[list[Raw_Packet], list[int]]:
         self._protocol = socket.IPPROTO_TCP
-        packets = list()
-        ports   = list()
+        packets        = list()
+        ports          = list()
+        self._dst_ip   = dst_ip
         for port in dst_ports:
-            self._set_packet_information(dst_ip, port)
-            ip_header  = self._IP()
-            tcp_header = self._TCP()
-            packets.append(Raw_Packet(ip_header + tcp_header))
+            self._dst_port = port
+            self._src_port = random.randint(10000, 65535)
+            packets.append(self._create_tcp_packet())
             ports.append(self._src_port)
         return packets, ports
 
 
-    def _set_packet_information(self, dst_ip:str, dst_port:int) -> None:
-        self._dst_ip   = dst_ip
+    def _get_decoy_tcp_packets(self, target_ip:str, dst_port:int, decoy_ips:list[int]) -> list[Raw_Packet]:
+        self._protocol = socket.IPPROTO_TCP
+        packets        = list()
+        self._dst_ip   = target_ip
         self._dst_port = dst_port
-        self._src_port = random.randint(10000, 65535)
+        for ip in decoy_ips:
+            self._src_ip   = ip
+            self._src_port = random.randint(10000, 65535)
+            packets.append(self._create_tcp_packet())
+        return packets
+
+
+    def _create_tcp_packet(self) -> Raw_Packet:
+        ip_header  = self._IP()
+        tcp_header = self._TCP()
+        return Raw_Packet(ip_header + tcp_header)
+
 
 
     # LAYERS -----------------------------------------------------------------------------------------------------

@@ -21,7 +21,7 @@ def temporary_socket(code:int, interface:str, start:int, end:int) -> str:
         )[start:end]
 
 
-def get_ip_address(interface:str=get_default_iface()) -> str|None:
+def get_my_ip_address(interface:str=get_default_iface()) -> str|None:
     try:
         raw_bytes = temporary_socket(0x8915, interface, 20, 24)
         return socket.inet_ntoa(raw_bytes)
@@ -45,8 +45,9 @@ def get_mac_from_iface(interface:str=get_default_iface()) -> str|None:
         return None
 
 
-def get_ip_range(ip:str, subnet_mask:str) -> ipaddress.IPv4Address:
-    return ipaddress.IPv4Network(f'{ip}/{subnet_mask}', strict=False)
+def get_ip_range() -> ipaddress.IPv4Address:
+    ip_range = ipaddress.IPv4Network(f'{get_my_ip_address()}/{get_subnet_mask()}', strict=False)
+    return list(ip_range.hosts())
 
 
 def convert_mask_to_cidr_ipv4(subnet_mask:str) -> int:

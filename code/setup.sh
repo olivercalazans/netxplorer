@@ -53,8 +53,6 @@ FILES=("arg_parser.py"                           # List of required Python scrip
        "pkt_dissector.py"
        "pkt_sender.py"
        "pscan.py"
-       "pscan_decoy.py"
-       "pscan_normal.py"
        "sniffer.py"
        "type_hints.py"
        )
