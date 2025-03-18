@@ -4,7 +4,7 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import threading, sys, time, random, asyncio
+import threading, sys, time, random
 from pkt_builder import Packet
 from pkt_sender  import send_layer_3_packet
 from sniffer     import Sniffer
@@ -20,23 +20,20 @@ class Normal_Scan:
         return False
 
 
-    __slots__ = ('_target_ip', '_target_ports', '_arg_flags', '_packets', '_ports_to_sniff', '_delay', '_lock', '_responses')
+    __slots__ = ('_target_ip', '_target_ports', '_args', '_packets', '_ports_to_sniff', '_lock', '_responses')
 
     def __init__(self, target_ip, ports, arg_flags) -> None:
         self._target_ip:str            = target_ip
         self._target_ports:list[int]   = ports
-        self._arg_flags:dict           = arg_flags
+        self._args:dict                 = arg_flags
         self._packets:list[Raw_Packet] = None
         self._ports_to_sniff:list[int] = None
-        self._delay:str                = None
         self._lock                     = threading.Lock()
         self._responses:list[dict]     = list()
 
 
     def _perform_normal_methods(self) -> None:
         self._create_packets()
-        #if self._arg_flags['delay']:
-        #    return self._sendings_with_delay()
         return self._send_and_receive()
 
 
@@ -52,50 +49,30 @@ class Normal_Scan:
 
 
     def _send_packets(self) -> None:
-        for packet, port in zip(self._packets, self._target_ports):
+        delay_list = self._get_delay_time_list()
+        index      = 1
+        for delay, packet, port in zip(delay_list, self._packets, self._target_ports):
+            time.sleep(delay)
             send_layer_3_packet(packet, self._target_ip, port)
-
-
-x = Normal_Scan('192.168.1.1', [22, 23, 443, 445], {'ok': 1234})
-z = x._perform_normal_methods()
-print(z)
-
-
-
-
-"""
-    # DELAY METHODS ------------------------------------------------------------------------------------------
-
-    def _sendings_with_delay(self) -> None:
-        self._get_delay_time_list()
-        threads     = []
-        for index ,packet in enumerate(self._packets):
-            thread = threading.Thread(target=self._async_send_packet, args=(packet,))
-            threads.append(thread)
-            thread.start()
-            sys.stdout.write(f'\rPacket sent: {index}/{len(self._packets)} - {self._delay[index]:.2}s')
+            sys.stdout.write(f'\rPacket sent: {index}/{len(self._packets)} - {delay}s')
             sys.stdout.flush()
-            time.sleep(self._delay[index])
-        for thread in threads:
-            thread.join()
+            index += 1
         print('\n')
 
 
-    def _get_delay_time_list(self) -> None:
-        match self._arg_flags['delay']:
-            case True: delay = [random.uniform(1, 3) for _ in range(len(self._packets))]
-            case _:    delay = self._create_delay_time_list()
-        self._delay = delay
+    def _get_delay_time_list(self) -> list[int]:
+        if self._args['delay'] is False:
+            return [0 for _ in range(len(self._packets))]
+        elif self._args['delay'] is True:
+            return [0] + [random.uniform(1, 3) for _ in range(len(self._packets) - 1)]
+        
+        values = [float(value) for value in self._args['delay'].split('-')]
+        if len(values) > 1:
+            return [0] + [random.uniform(values[0], values[1]) for _ in range(len(self._packets) - 1)]
+        return [0] + [values[0] for _ in range(len(self._packets) - 1)]
 
 
-    def _create_delay_time_list(self) -> list:
-        values = [float(value) for value in self._arg_flags['delay'].split('-')]
-        if len(values) > 1: return [random.uniform(values[0], values[1]) for _ in range(len(self._packets))]
-        return [values[0] for _ in range(len(self._packets))]
 
-
-    def _async_send_packet(self, packet:Packet) -> None:
-        response = sr1(packet, timeout=3, verbose=0)
-        with self._lock:
-            self._responses.append((packet, response))
-    """
+x = Normal_Scan('192.168.1.1', [22, 23, 443, 445], {'delay': False})
+z = x._perform_normal_methods()
+print(z)
