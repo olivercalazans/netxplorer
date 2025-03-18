@@ -4,69 +4,53 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket, ctypes, asyncio
+import socket, ctypes, threading, time
 from pkt_dissector import Dissector
 from network       import get_default_iface
-from type_hints    import BPF_Instruction, BPF_Configured_Socket
+from type_hints    import BPF_Instruction, BPF_Configured_Socket, Raw_Packet
 
 
 class Sniffer:
 
-    __slots__ = ('_protocol', '_ports', '_sniffer', '_running', '_task', '_packet_queue', '_loop')
+    __slots__ = ('_protocol', '_ports', '_sniffer', '_running', '_responses')
 
     def __init__(self, protocol:str, ports:list) -> None:
         self._protocol:str                  = protocol
         self._ports:list[int]               = ports
         self._sniffer:BPF_Configured_Socket = None
-        self._running:bool                  = False
-        self._task: asyncio.Task            = None
-        self._packet_queue                  = asyncio.Queue()
-        self._loop                          = asyncio.get_event_loop()
-
+        self._running:bool                  = True
+        self._responses:list[Raw_Packet]    = list()
 
     
-    async def __aenter__(self):
-        await self._start()
+    def __enter__(self):
+        self._create_sniffer()
+        self._start_sniffing()
         return self
     
-    async def _start(self) -> None:
-        if self._running: return
-        self._running = True
-        self._sniffer = self._create_sniffer()
-        self._sniffer.setblocking(False)
-        self._task = asyncio.create_task(self._sniff_loop())
 
-
-    async def __aexit__(self, exc_type, exc_value, traceback):
-        await self._stop()
+    def __exit__(self, exc_type, exc_value, traceback):
         return False
 
-    async def _stop(self) -> None:
-        self._running = False
-        if self._sniffer:
-            self._sniffer.close()
-        await self._task
+
+    def _start_sniffing(self) -> None:
+        thread = threading.Thread(target=self._sniff)
+        thread.start()
 
 
-
-    async def _get_packets(self) -> list[dict]:
-        packets = []
-        try:
-            while True:
-                packets.append(await asyncio.wait_for(self._packet_queue.get(), 5))
-        except asyncio.TimeoutError:
-            pass
-        return self._process_packets(packets)
-
-
-
-    async def _sniff_loop(self):
+    def _sniff(self):
         while self._running:
-            try:
-                packet = await self._loop.sock_recv(self._sniffer, 65535)
-                await self._packet_queue.put(packet)
-            except (BlockingIOError, OSError):
-                await asyncio.sleep(0.01)
+            packet, _ = self._sniffer.recvfrom(65535)
+            self._responses.append(packet)
+
+    
+    def _get_result(self) -> list[dict]:
+        self._running = False
+        return self._process_packets()
+
+
+    def _process_packets(self) -> list[dict]:
+        with Dissector() as DISSECTOR:
+            return DISSECTOR._dissect(self._responses)
 
 
 
@@ -85,7 +69,7 @@ class Sniffer:
         libc = ctypes.cdll.LoadLibrary("libc.so.6")
         libc.setsockopt(sniffer.fileno(), socket.SOL_SOCKET, SO_ATTACH_FILTER, ctypes.byref(prog), ctypes.sizeof(prog))
 
-        return sniffer
+        self._sniffer = sniffer
 
 
 
@@ -123,13 +107,6 @@ class Sniffer:
             false_jump = 0 if i + 1 < len_ports else 1 
             port_parameters.append((0x15, true_jump, false_jump, port))
         return port_parameters
-
-
-
-    @staticmethod
-    def _process_packets(packets) -> list[dict]:
-        with Dissector() as DISSECTOR:
-            return DISSECTOR._dissect(packets)
 
 
 
