@@ -7,8 +7,7 @@
 import socket, random, time, sys
 from arg_parser  import Argument_Manager as ArgParser
 from sniffer     import Sniffer
-from pscan_decoy import Decoy
-from network     import get_ports
+from network     import get_ports, get_ip_range
 from pkt_sender  import send_layer_3_packet
 from pkt_builder import Packet
 from type_hints  import Raw_Packet
@@ -60,7 +59,7 @@ class Port_Scanner:
     def _execute(self) -> None:
         try:
             self._prepare_ports()
-            self._create_packets()
+            self._get_packets()
             self._send_and_receive()
             self._display_result()
         except KeyboardInterrupt:   print(f'\n{red("Process stopped")}')
@@ -79,8 +78,32 @@ class Port_Scanner:
             self._target_ports = dict(random_list)
 
 
-    def _create_packets(self) -> None:
-        self._packets, self._ports_to_sniff = Packet()._create_tcp_packet(self._target_ip, self._target_ports)
+
+    def _get_packets(self) -> None:
+        if self._args['decoy']:
+            self._get_decoy_and_real_packets()
+        else:
+            self._packets, self._ports_to_sniff = Packet()._get_tcp_packets(self._target_ip, self._target_ports)
+
+
+
+    def _get_decoy_and_real_packets(self) -> None:
+        decoy_ips     = self._generate_random_ip_in_subnet()
+        decoy_packets = Packet()._get_decoy_tcp_packets(self._target_ip, self._target_ports, decoy_ips)
+        packet, port  = Packet()._get_tcp_packets(self._target_ip, self._target_ports)
+        pkt_number    = len(decoy_packets)
+        real_ip_index = random.randint(pkt_number // 2, pkt_number - 1)
+        decoy_packets.insert(packet, real_ip_index)
+        self._packets        = decoy_packets
+        self._ports_to_sniff = port
+
+
+
+    def _generate_random_ip_in_subnet(self, count = random.randint(4, 6)) -> list[str]:
+        ip_range   = get_ip_range()
+        random_ips = random.sample(ip_range, count)
+        return [str(ip) for ip in random_ips]
+
 
 
     def _send_and_receive(self) -> None:
@@ -88,6 +111,7 @@ class Port_Scanner:
             self._send_packets()
             time.sleep(3)
             return sniffer._get_result()
+
 
 
     def _send_packets(self) -> None:
@@ -102,6 +126,7 @@ class Port_Scanner:
         print('\n')
 
 
+
     def _get_delay_time_list(self) -> list[int]:
         if self._args['delay'] is False:
             return [0 for _ in range(len(self._packets))]
@@ -113,12 +138,6 @@ class Port_Scanner:
             return [0] + [random.uniform(values[0], values[1]) for _ in range(len(self._packets) - 1)]
         return [0] + [values[0] for _ in range(len(self._packets) - 1)]
 
-
-    def _perform_decoy_scan(self) -> None:
-        self._prepare_ports()
-        with Decoy(self._target_ip, list(self._target_ports.keys())) as DECOY:
-            self._responses    = DECOY._perform_decoy_methods()
-            self._args['show'] = True
 
 
     def _display_result(self) -> None:
