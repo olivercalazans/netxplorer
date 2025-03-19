@@ -9,7 +9,7 @@ from scapy.layers.l2   import Ether, ARP
 from scapy.layers.inet import IP, ICMP
 from scapy.sendrecv    import srp, sr
 from arg_parser        import Argument_Manager as ArgParser
-from network           import *
+from net_info          import *
 from display           import *
 
 

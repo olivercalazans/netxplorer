@@ -4,9 +4,9 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket, ctypes, threading, time
+import socket, ctypes, threading
 from pkt_dissector import Dissector
-from network       import get_default_iface
+from net_info      import get_default_iface
 from type_hints    import BPF_Instruction, BPF_Configured_Socket, Raw_Packet
 
 

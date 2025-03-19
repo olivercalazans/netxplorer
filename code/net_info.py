@@ -4,7 +4,7 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket, ipaddress, fcntl, struct, re, subprocess
+import socket, fcntl, struct, re, subprocess
 from display import *
 
 
@@ -14,11 +14,13 @@ def get_default_iface() -> str:
     return result.stdout.strip()
 
 
+
 def temporary_socket(code:int, interface:str, start:int, end:int) -> str:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         return fcntl.ioctl(sock.fileno(), code,
             struct.pack('256s', interface[:15].encode('utf-8'))
         )[start:end]
+
 
 
 def get_my_ip_address(interface:str=get_default_iface()) -> str|None:
@@ -29,12 +31,14 @@ def get_my_ip_address(interface:str=get_default_iface()) -> str|None:
         return None
 
 
+
 def get_subnet_mask(interface:str=get_default_iface()) -> str|None:
     try:
         raw_bytes = temporary_socket(0x891b, interface, 20, 24)
         return socket.inet_ntoa(raw_bytes)
     except Exception:
         return None
+
 
 
 def get_mac_from_iface(interface:str=get_default_iface()) -> str|None:
@@ -44,14 +48,6 @@ def get_mac_from_iface(interface:str=get_default_iface()) -> str|None:
     except Exception:
         return None
 
-
-def get_ip_range() -> ipaddress.IPv4Address:
-    ip_range = ipaddress.IPv4Network(f'{get_my_ip_address()}/{get_subnet_mask()}', strict=False)
-    return list(ip_range.hosts())
-
-
-def convert_mask_to_cidr_ipv4(subnet_mask:str) -> int:
-    return ipaddress.IPv4Network(f'0.0.0.0/{subnet_mask}').prefixlen
 
 
 def get_buffer_size() -> int:
@@ -65,12 +61,14 @@ def get_buffer_size() -> int:
         return temp_sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
 
 
+
 def get_ports(port_type='all') -> dict:
     match port_type:
         case 'common':   return get_common_ports()
         case 'uncommon': return get_uncommon_ports()
         case 'all':      return {**get_common_ports(), **get_uncommon_ports()}
         case _:          return get_specific_ports(port_type)
+
 
 
 def get_specific_ports(string:str) -> dict:
@@ -157,6 +155,5 @@ def get_uncommon_ports() -> dict:
         10000: 'Webmin',  
         20000: 'Webmin',  
         50000: 'SAP',  
-        52000: 'Apple Remote Desktop',  
-        54321: 'Back Orifice',  
+        52000: 'Apple Remote Desktop',    
     }

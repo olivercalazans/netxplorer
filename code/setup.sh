@@ -48,11 +48,11 @@ FILES=("arg_parser.py"                           # List of required Python scrip
        "display.py"
        "main.py"
        "netmap.py"
-       "network.py"
+       "net_info.py"
        "pkt_builder.py"
        "pkt_dissector.py"
        "pkt_sender.py"
-       "pscan.py"
+       "port_scan.py"
        "sniffer.py"
        "type_hints.py"
        )
