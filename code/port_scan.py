@@ -38,11 +38,13 @@ class Port_Scanner:
         self._get_argument_and_flags(parser_manager)
 
 
+
     def __enter__(self):
         return self
     
     def __exit__(self, exc_type, exc_value, traceback):
         return False
+
 
 
     def _get_argument_and_flags(self, parser_manager:ArgParser) -> None:
@@ -56,6 +58,7 @@ class Port_Scanner:
         }
 
 
+
     def _execute(self) -> None:
         try:
             self._prepare_ports()
@@ -65,6 +68,7 @@ class Port_Scanner:
         except KeyboardInterrupt:   print(f'\n{red("Process stopped")}')
         except ValueError as error: print(f'{yellow("Error")}: {error}')
         except Exception as error:  print(unexpected_error(error))
+
 
 
     def _prepare_ports(self) -> None:
@@ -117,11 +121,14 @@ class Port_Scanner:
 
 
     def _display_result(self) -> None:
+        open_ports = 0
         for pkt_info in self._responses:
             if pkt_info['flags'] != 'SYN-ACK' and self._args['show'] is False:
                 continue
+            if pkt_info['flags'] == 'SYN-ACK': open_ports += 1
             flags       = pkt_info['flags']
             status      = self.STATUS.get(flags)
             port        = pkt_info['port']
             description = self._port_description[port]
             print(f'Status: {status:>17} -> {port:>5} - {description}')
+        print(f'Open ports: {open_ports}/{len(self._responses)}')
