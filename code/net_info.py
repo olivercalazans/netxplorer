@@ -4,7 +4,7 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket, fcntl, struct, re, subprocess
+import socket, fcntl, struct, re, subprocess, ipaddress
 from display import *
 
 
@@ -47,6 +47,12 @@ def get_mac_from_iface(interface:str=get_default_iface()) -> str|None:
         return ":".join("%02x" % b for b in raw_bytes)
     except Exception:
         return None
+
+
+
+def get_ip_range() -> ipaddress.IPv4Address:
+    ip_range = ipaddress.IPv4Network(f'{get_my_ip_address()}/{get_subnet_mask()}', strict=False)
+    return list(ip_range.hosts())
 
 
 
