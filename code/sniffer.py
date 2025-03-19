@@ -4,7 +4,7 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket, ctypes, threading
+import socket, ctypes, threading, select
 from pkt_dissector import Dissector
 from net_info      import get_default_iface
 from type_hints    import BPF_Instruction, BPF_Configured_Socket, Raw_Packet
@@ -12,13 +12,14 @@ from type_hints    import BPF_Instruction, BPF_Configured_Socket, Raw_Packet
 
 class Sniffer:
 
-    __slots__ = ('_protocol', '_ports', '_sniffer', '_running', '_responses')
+    __slots__ = ('_protocol', '_ports', '_sniffer', '_running', '_thread', '_responses')
 
     def __init__(self, protocol:str, ports:list) -> None:
         self._protocol:str                  = protocol
         self._ports:list[int]               = ports
         self._sniffer:BPF_Configured_Socket = None
         self._running:bool                  = True
+        self._thread:threading.Thread       = None
         self._responses:list[Raw_Packet]    = list()
 
     
@@ -33,18 +34,26 @@ class Sniffer:
 
 
     def _start_sniffing(self) -> None:
-        thread = threading.Thread(target=self._sniff)
-        thread.start()
+        self._thread = threading.Thread(target=self._sniff)
+        self._thread.start()
 
 
     def _sniff(self):
-        while self._running:
-            packet, _ = self._sniffer.recvfrom(65535)
-            self._responses.append(packet)
+        while self._running is True:
+            readable, _, _= select.select([self._sniffer], [], [], 0.001)
+            if readable:
+                packet, _ = self._sniffer.recvfrom(65535)
+                self._responses.append(packet)
 
-    
-    def _get_result(self) -> list[dict]:
+
+    def _stop_sniffing(self) -> None:
         self._running = False
+        if self._thread:
+            self._thread.join()
+
+
+    def _get_result(self) -> list[dict]:
+        self._stop_sniffing()
         return self._process_packets()
 
 
