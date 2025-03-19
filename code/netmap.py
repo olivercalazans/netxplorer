@@ -3,13 +3,13 @@
 # Repository: https://github.com/olivercalazans/netxplorer
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
-
+import ipaddress
 from scapy.all         import conf, get_if_addr, Packet
 from scapy.layers.l2   import Ether, ARP
 from scapy.layers.inet import IP, ICMP
 from scapy.sendrecv    import srp, sr
 from arg_parser        import Argument_Manager as ArgParser
-from net_info          import *
+from net_info          import get_subnet_mask, get_ip_range, get_buffer_size
 from display           import *
 
 
