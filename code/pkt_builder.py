@@ -5,7 +5,7 @@
 
 
 import socket, struct, random
-from network    import get_my_ip_address
+from net_info   import get_my_ip_address
 from type_hints import Raw_Packet
 
 
@@ -39,18 +39,6 @@ class Packet:
             packets.append(self._create_tcp_packet())
             ports.append(self._src_port)
         return packets, ports
-
-
-    def _get_decoy_tcp_packets(self, target_ip:str, dst_port:int, decoy_ips:list[int]) -> list[Raw_Packet]:
-        self._protocol = socket.IPPROTO_TCP
-        packets        = list()
-        self._dst_ip   = target_ip
-        self._dst_port = dst_port
-        for ip in decoy_ips:
-            self._src_ip   = ip
-            self._src_port = random.randint(10000, 65535)
-            packets.append(self._create_tcp_packet())
-        return packets
 
 
     def _create_tcp_packet(self) -> Raw_Packet:

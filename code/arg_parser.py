@@ -35,12 +35,11 @@ class Argument_Manager:
         DEFINITIONS = {
             'pscan': [
                 ('arg',   'host', 'Target IP/Hostname'),
-                ('bool',  '-s', '--show',    'Display all statuses, both open and closed'),
-                ('bool',  '-r', '--random',  'Use the ports in random order'),
-                ('value', '-p', '--port',    str, 'Specify a port to scan'),
-                ('bool',  '-a', '--all',     'Scan all ports'),
-                ('opt',   '-d', '--delay',   'Add a delay between packet transmissions'),
-                ('value', '-D', '--decoy',   str, 'Uses decoy method'),
+                ('bool',  '-s', '--show',   'Display all statuses, both open and closed'),
+                ('bool',  '-r', '--random', 'Use the ports in random order'),
+                ('value', '-p', '--port',   str, 'Specify a port to scan'),
+                ('bool',  '-a', '--all',    'Scan all ports'),
+                ('opt',   '-d', '--delay',  'Add a delay between packet transmissions'),
                 ],
             
             'banner': [
