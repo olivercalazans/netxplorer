@@ -17,7 +17,7 @@ For detailed documentation about NetXplorer, visit our [Wiki](https://github.com
 The documentation includes:
   - Overview of the code
   - Installation instructions
-  - List of available command flags
+  - Command description
   
 <br>
 
@@ -27,7 +27,7 @@ To make it easier to use this project, a bash script has been created to handle 
 <br>
 
 ## Dependencies
-This project has a single dependency: the Scapy library, which enables easy manipulation of network packets.  You can explore the library on [GitHub](https://github.com/secdev/scapy) or visit the [official website](https://scapy.net/) for more details.
+This project has a single dependency: Python 3.10 or higher. This code relies solely on Python's standard libraries.
 > [!IMPORTANT]
 > Although the code is designed to run on Linux systems, it can also be used on Windows via WSL (Windows Subsystem for Linux).
 
