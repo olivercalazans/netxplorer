@@ -4,7 +4,7 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket, struct, random
+import socket, struct, random, os
 from net_info   import get_my_ip_address
 from type_hints import Raw_Packet
 
@@ -49,6 +49,23 @@ class Packet:
 
 
     # LAYERS -----------------------------------------------------------------------------------------------------
+
+    def _ICMP(self):
+        id     = os.getpid() & 0xFFFF
+        header = struct.pack("!BBHHH",
+                             8, #.......: ICMP type
+                             0, #.......: ICMP code
+                             0, #.......: Checksum
+                             id, #......: ID
+                             1 #........: Sequence Number
+                             )
+
+        payload = bytes((os.urandom(56)))
+        chksum  = self._checksum(header + payload)
+        header  = struct.pack("!BBHHH", 8, 0, chksum, id, 1)
+        return header + payload
+
+
 
     def _IP(self) -> bytes:
         return struct.pack('!BBHHHBBH4s4s',
