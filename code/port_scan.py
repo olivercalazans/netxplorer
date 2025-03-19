@@ -94,7 +94,6 @@ class Port_Scanner:
 
     def _send_packets(self) -> None:
         delay_list = self._get_delay_time_list()
-        print(self._packets)
         index      = 1
         for delay, packet, port in zip(delay_list, self._packets, self._target_ports):
             send_layer_3_packet(packet, self._target_ip, port)
@@ -102,7 +101,7 @@ class Port_Scanner:
             sys.stdout.flush()
             time.sleep(delay)
             index += 1
-        print('\n')
+        sys.stdout.write('\n')
 
 
 
