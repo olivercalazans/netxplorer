@@ -5,7 +5,7 @@
 
 
 import socket, ctypes, threading, select
-from pkt_dissector import Dissector
+from pkt_dissector import dissect_tcp_packet
 from net_info      import get_default_iface
 from type_hints    import BPF_Instruction, BPF_Configured_Socket, Raw_Packet
 
@@ -23,6 +23,7 @@ class Sniffer:
         self._responses:list[Raw_Packet]    = list()
 
     
+
     def __enter__(self):
         self._create_sniffer()
         self._start_sniffing()
@@ -33,9 +34,11 @@ class Sniffer:
         return False
 
 
+
     def _start_sniffing(self) -> None:
         self._thread = threading.Thread(target=self._sniff)
         self._thread.start()
+
 
 
     def _sniff(self):
@@ -46,10 +49,12 @@ class Sniffer:
                 self._responses.append(packet)
 
 
+
     def _stop_sniffing(self) -> None:
         self._running = False
         if self._thread:
             self._thread.join()
+
 
 
     def _get_result(self) -> list[dict]:
@@ -57,9 +62,9 @@ class Sniffer:
         return self._process_packets()
 
 
+
     def _process_packets(self) -> list[dict]:
-        with Dissector() as DISSECTOR:
-            return DISSECTOR._dissect(self._responses)
+        return [dissect_tcp_packet(pkt) for pkt in self._responses]
 
 
 
