@@ -4,20 +4,16 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 import ipaddress
-from scapy.all         import conf, get_if_addr, Packet
-from scapy.layers.l2   import Ether, ARP
-from scapy.layers.inet import IP, ICMP
-from scapy.sendrecv    import srp, sr
-from arg_parser        import Argument_Manager as ArgParser
-from net_info          import get_subnet_mask, get_ip_range, get_buffer_size
-from display           import *
+from arg_parser import Argument_Manager as ArgParser
+from net_info   import get_subnet_mask, get_ip_range, get_buffer_size
+from type_hints import Raw_Packet
+from display    import *
 
 
 class Network_Mapper:
 
     def __init__(self, parser_manager:ArgParser) -> None:
         self._flags:dict = None
-        self._my_ip:str  = get_if_addr(conf.iface)
         self._get_argument_and_flags(parser_manager)
 
 
@@ -40,12 +36,11 @@ class Network_Mapper:
     def _get_argument_and_flags(self, parser_manager:ArgParser) -> None:
         self._flags = {'ping': parser_manager.ping}
 
-    # PACKETS -------------------------------------------------------------------------
 
     def _get_arp_packet(self) -> Packet:
         return Ether(dst="FF:FF:FF:FF:FF:FF") / ARP(op=1, pdst=self._my_ip)
     
-    def _get_ping_packet(self, target_ip:ipaddress) -> Packet:
+    def _get_ping_packets(self, target_ip:ipaddress) -> list[Raw_Packet]:
         return IP(dst=target_ip) / ICMP()
 
 
