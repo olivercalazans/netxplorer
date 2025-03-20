@@ -9,7 +9,7 @@ from arg_parser  import Argument_Manager as ArgParser
 from sniffer     import Sniffer
 from net_info    import get_ports
 from pkt_sender  import send_layer_3_packet
-from pkt_builder import Packet
+from pkt_builder import TCP, IP
 from type_hints  import Raw_Packet
 from display     import *
 
@@ -32,8 +32,8 @@ class Port_Scanner:
         self._args:dict                = None
         self._port_description:dict    = None
         self._target_ports:list[int]   = None
-        self._ports_to_sniff:list[int] = None
-        self._packets:list[Raw_Packet] = None
+        self._ports_to_sniff:list[int] = list()
+        self._packets:list[Raw_Packet] = list()
         self._responses:list[dict]     = None
         self._get_argument_and_flags(parser_manager)
 
@@ -62,7 +62,7 @@ class Port_Scanner:
     def _execute(self) -> None:
         try:
             self._prepare_ports()
-            self._get_packets()
+            self._create_packets()
             self._send_and_receive()
             self._display_result()
         except KeyboardInterrupt:   print(f'\n{red("Process stopped")}')
@@ -82,9 +82,14 @@ class Port_Scanner:
             random.shuffle(self._target_ports)
 
 
-
-    def _get_packets(self) -> None:
-        self._packets, self._ports_to_sniff = Packet()._get_tcp_packets(self._target_ip, self._target_ports)
+    
+    def _create_packets(self) -> None:
+        for dst_port in self._target_ports:
+            src_port   = random.randint(10000, 65535)
+            ip_header  = IP(self._target_ip)
+            tcp_header = TCP(src_port, dst_port, self._target_ip)
+            self._packets.append(ip_header + tcp_header)
+            self._ports_to_sniff.append(src_port)
 
 
 
