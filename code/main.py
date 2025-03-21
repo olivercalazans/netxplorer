@@ -5,23 +5,27 @@
 
 
 import sys
-from arg_parser import Argument_Manager as ArgParser
+from arg_parser import parse
 from port_scan  import Port_Scanner
-from bgrab      import Banner_Grabbing
+from bgrab      import Banner_Grabber
 #from netmap     import Network_Mapper
+from type_hints import Arg_Parser
 from display    import *
 
 
 class Main:
 
+    COMMAND_DICT = {
+        'pscan':  Port_Scanner,
+        'banner': Banner_Grabber,
+#        'netmap': Network_Mapper
+    }
+
+    __slots__ = ('_command', '_arguments')
+
     def __init__(self) -> None:
         self._command:str    = None
         self._arguments:list = None
-        self._commands_dict  = {
-            'pscan':  Port_Scanner,
-            'banner': Banner_Grabbing,
-            #'netmap': Network_Mapper
-        }
 
 
     def _handle_user(self) -> None:
@@ -38,18 +42,18 @@ class Main:
 
 
     def _verify_if_the_command_exists(self) -> None:
-        if    self._command in self._commands_dict: self._validate_flags()
-        elif  self._command in ('--help', '-h'):    self._display_description()
+        if    self._command in self.COMMAND_DICT: self._validate_flags()
+        elif  self._command in ('--help', '-h'):  self._display_description()
         else: print(f'{yellow("Unknown command")} "{self._command}"')
 
 
     def _validate_flags(self) -> None:
-        arg_parser = ArgParser()._parse(self._command, self._arguments)
+        arg_parser = parse(self._command, self._arguments)
         self._run_command(arg_parser)
 
 
-    def _run_command(self, arg_parser:ArgParser) -> None:
-        strategy_class = self._commands_dict.get(self._command)
+    def _run_command(self, arg_parser:Arg_Parser) -> None:
+        strategy_class = self.COMMAND_DICT.get(self._command)
         with strategy_class(arg_parser) as strategy:
             strategy._execute()
 
