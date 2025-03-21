@@ -85,7 +85,7 @@ def get_specific_ports(string:str) -> dict:
     for part in parts:
         if '-' in part:
             start, end = map(int, part.split('-'))
-            if start > end: raise ValueError(f'Invalid range: {start}-{end}')
+            if start >= end: raise ValueError(f'Invalid range: {start}-{end}')
             result.extend(range(start, end + 1))
         else:
             result.append(int(part))

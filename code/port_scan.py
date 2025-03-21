@@ -25,16 +25,13 @@ class Port_Scanner:
         'Filtered': red('Filtered')
     }
 
-    __slots__ = ('_target_ip', '_args', '_port_description', '_target_ports', '_ports_to_sniff', '_packets', '_responses')
+    __slots__ = ('_target_ip', '_args', '_target_ports', '_responses')
 
     def __init__(self, parser_manager:ArgParser) -> None:
-        self._target_ip:str            = None
-        self._args:dict                = None
-        self._port_description:dict    = None
-        self._target_ports:list[int]   = None
-        self._ports_to_sniff:list[int] = list()
-        self._packets:list[Raw_Packet] = list()
-        self._responses:list[dict]     = None
+        self._target_ip:str        = None
+        self._args:dict            = None
+        self._target_ports:dict    = None
+        self._responses:list[dict] = None
         self._get_argument_and_flags(parser_manager)
 
 
@@ -61,8 +58,7 @@ class Port_Scanner:
 
     def _execute(self) -> None:
         try:
-            self._prepare_ports()
-            self._create_packets()
+            self._prepare_target_ports()
             self._send_and_receive()
             self._display_result()
         except KeyboardInterrupt:   print(f'\n{red("Process stopped")}')
@@ -71,57 +67,57 @@ class Port_Scanner:
 
 
 
-    def _prepare_ports(self) -> None:
-        if self._args['port']:  self._port_description = get_ports(self._args['port'])
-        elif self._args['all']: self._port_description = get_ports()
-        else:                   self._port_description = get_ports('common')
-        
-        self._target_ports = [port for port in self._port_description.keys()]
+    def _prepare_target_ports(self) -> None:
+        if self._args['port']:  self._target_ports = get_ports(self._args['port'])
+        elif self._args['all']: self._target_ports = get_ports()
+        else:                   self._target_ports = get_ports('common')
         
         if self._args['random']:
-            random.shuffle(self._target_ports)
-
-
-    
-    def _create_packets(self) -> None:
-        for dst_port in self._target_ports:
-            src_port   = random.randint(10000, 65535)
-            ip_header  = IP(self._target_ip)
-            tcp_header = TCP(src_port, dst_port, self._target_ip)
-            self._packets.append(ip_header + tcp_header)
-            self._ports_to_sniff.append(src_port)
+            random_list        = random.sample(list(self._target_ports.items()), len(self._target_ports))
+            self._target_ports = dict(random_list)
 
 
 
     def _send_and_receive(self) -> None:
-        with Sniffer('IP', self._ports_to_sniff) as sniffer:
-            self._send_packets()
+        src_ports = ports_to_sniff = [random.randint(10000, 65535) for _ in self._target_ports]
+        with Sniffer('IP', ports_to_sniff) as sniffer:
+            self._send_packets(src_ports)
             time.sleep(3)
             self._responses = sniffer._get_result()
 
 
 
-    def _send_packets(self) -> None:
+    def _send_packets(self, src_ports:list[int]) -> None:
         delay_list = self._get_delay_time_list()
         index      = 1
-        for delay, packet, port in zip(delay_list, self._packets, self._target_ports):
-            send_layer_3_packet(packet, self._target_ip, port)
-            sys.stdout.write(f'\rPacket sent: {index}/{len(self._packets)} >> delay {delay:.2f}')
+        for delay, src_port, dst_port in zip(delay_list, src_ports, self._target_ports):
+            packet = self._create_packet(src_port, dst_port)
+            send_layer_3_packet(packet, self._target_ip, dst_port)
+
+            sys.stdout.write(f'\rPacket sent: {index}/{len(self._target_ports)} >> delay {delay:.2f}')
             sys.stdout.flush()
+            
             time.sleep(delay)
             index += 1
         sys.stdout.write('\n')
 
+    
+
+    def _create_packet(self, src_port:int, dst_port:int) -> Raw_Packet:
+        ip_header  = IP(self._target_ip)
+        tcp_header = TCP(src_port, dst_port, self._target_ip)
+        return Raw_Packet(ip_header + tcp_header)
+
 
 
     def _get_delay_time_list(self) -> list[int]:
-        if   self._args['delay'] is False: return [0.0 for _ in range(len(self._packets) - 1)] + [2.0]
-        elif self._args['delay'] is True:  return [random.uniform(0.5, 2) for _ in range(len(self._packets))]
+        if   self._args['delay'] is False: return [0.0 for _ in range(len(self._target_ports))]
+        elif self._args['delay'] is True:  return [random.uniform(0.5, 2) for _ in range(len(self._target_ports))]
 
         values = [float(value) for value in self._args['delay'].split('-')]
         if len(values) > 1:
-            return [random.uniform(values[0], values[1]) for _ in range(len(self._packets))]
-        return [values[0] for _ in range(len(self._packets))]
+            return [random.uniform(values[0], values[1]) for _ in range(len(self._target_ports))]
+        return [values[0] for _ in range(len(self._target_ports))]
 
 
 
@@ -134,6 +130,6 @@ class Port_Scanner:
             flags       = pkt_info['flags']
             status      = self.STATUS.get(flags)
             port        = pkt_info['port']
-            description = self._port_description[port]
+            description = self._target_ports[port]
             print(f'Status: {status:>17} -> {port:>5} - {description}')
-        print(f'Open ports: {open_ports}/{len(self._responses)}')
+        print(f'Open ports: {open_ports}/{len(self._target_ports)}')
