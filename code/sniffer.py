@@ -20,7 +20,7 @@ class Sniffer:
         self._sniffer:BPF_Configured_Socket = None
         self._running:bool                  = True
         self._thread:threading.Thread       = None
-        self._responses:list[Raw_Packet]    = list()
+        self._responses:list[dict]          = list()
 
     
 
@@ -46,7 +46,8 @@ class Sniffer:
             readable, _, _= select.select([self._sniffer], [], [], 0.001)
             if readable:
                 packet, _ = self._sniffer.recvfrom(65535)
-                self._responses.append(packet)
+                data      = dissect_tcp_packet(packet)
+                self._responses.append(data)
 
 
 
@@ -59,12 +60,7 @@ class Sniffer:
 
     def _get_result(self) -> list[dict]:
         self._stop_sniffing()
-        return self._process_packets()
-
-
-
-    def _process_packets(self) -> list[dict]:
-        return [dissect_tcp_packet(pkt) for pkt in self._responses]
+        return self._responses
 
 
 
