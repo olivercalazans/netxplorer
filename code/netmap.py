@@ -5,15 +5,15 @@
 
 import ipaddress
 from net_info   import get_subnet_mask, get_ip_range, get_buffer_size
-from type_hints import Arg_Parser, Raw_Packet
+from type_hints import Raw_Packet
 from display    import *
 
 
 class Network_Mapper:
 
-    def __init__(self, parser_manager:Arg_Parser) -> None:
-        self._flags:dict = None
-        self._get_argument_and_flags(parser_manager)
+    def __init__(self, arguments:dict) -> None:
+        self._flags:dict = arguments
+
 
 
     def __enter__(self):
@@ -21,6 +21,7 @@ class Network_Mapper:
     
     def __exit__(self, exc_type, exc_value, traceback):
         return False
+
 
 
     def _execute(self) -> None:
@@ -31,9 +32,6 @@ class Network_Mapper:
         except ValueError as error: print(yellow(error))
         except Exception as error:  print(unexpected_error(error))
 
-
-    def _get_argument_and_flags(self, parser_manager:Arg_Parser) -> None:
-        self._flags = {'ping': parser_manager.ping}
 
 
     def _get_arp_packet(self) -> Packet:

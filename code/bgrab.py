@@ -5,19 +5,18 @@
 
 
 import socket, ssl
-from type_hints import Arg_Parser
-from display    import *
+from display import *
 
 
 class Banner_Grabber:
 
     __slots__ = ('_host', '_protocol', '_port')
 
-    def __init__(self, parser_manager:Arg_Parser) -> None:
-        self._host:str     = None
-        self._protocol:str = None
-        self._port:int     = None
-        self._get_argument_and_flags(parser_manager)
+    def __init__(self, arguments:dict) -> None:
+        self._host:str     = arguments['host']
+        self._protocol:str = arguments['protocol']
+        self._port:int     = arguments['port']
+
 
 
     def __enter__(self):
@@ -26,11 +25,6 @@ class Banner_Grabber:
     def __exit__(self, exc_type, exc_value, traceback):
         return False
 
-
-    def _get_argument_and_flags(self, parser_manager:Arg_Parser) -> None:
-        self._host     = parser_manager.host
-        self._protocol = parser_manager.protocol
-        self._port     = parser_manager.port
 
 
     def _execute(self) -> None:
@@ -41,11 +35,13 @@ class Banner_Grabber:
         except Exception as error:              print(f'{unexpected_error(error)}')
 
 
+
     def _grab_banners_on_the_protocol(self) -> None:
         protocol = self._protocol_dictionary().get(self._protocol)
         host     = socket.gethostbyname(self._host)
         port     = self._port if self._port else protocol['port']
         protocol['func'](host, port)
+
 
 
     @staticmethod
@@ -56,6 +52,7 @@ class Banner_Grabber:
             'http':  {'func': http_banner_grabbing,  'port': 80},
             'https': {'func': https_banner_grabbing, 'port': 443}
         }
+
 
 
 # ICONS ======================================================================================================

@@ -8,8 +8,6 @@ import socket, argparse
 from typing import NewType
 
 
-Arg_Parser = NewType('Arg_Parser', argparse.ArgumentParser)
-
 Raw_Packet = NewType('Raw_Packet', bytes)
 
 BPF_Instruction       = NewType('BPF_Instruction', tuple[int, int, int, int])

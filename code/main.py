@@ -5,11 +5,10 @@
 
 
 import sys
-from arg_parser import parse
+from arg_parser import validate_and_get_flags
 from port_scan  import Port_Scanner
 from bgrab      import Banner_Grabber
 #from netmap     import Network_Mapper
-from type_hints import Arg_Parser
 from display    import *
 
 
@@ -42,19 +41,19 @@ class Main:
 
 
     def _verify_if_the_command_exists(self) -> None:
-        if    self._command in self.COMMAND_DICT: self._validate_flags()
+        if    self._command in self.COMMAND_DICT: self._validate_arguments()
         elif  self._command in ('--help', '-h'):  self._display_description()
         else: print(f'{yellow("Unknown command")} "{self._command}"')
 
 
-    def _validate_flags(self) -> None:
-        arg_parser = parse(self._command, self._arguments)
-        self._run_command(arg_parser)
+    def _validate_arguments(self) -> None:
+        arguments = validate_and_get_flags(self._command, self._arguments)
+        self._run_command(arguments)
 
 
-    def _run_command(self, arg_parser:Arg_Parser) -> None:
+    def _run_command(self, arguments:dict) -> None:
         strategy_class = self.COMMAND_DICT.get(self._command)
-        with strategy_class(arg_parser) as strategy:
+        with strategy_class(arguments) as strategy:
             strategy._execute()
 
 
