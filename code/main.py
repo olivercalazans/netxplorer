@@ -20,7 +20,7 @@ class Main:
         self._commands_dict  = {
             'pscan':  Port_Scanner,
             'banner': Banner_Grabbing,
-#            'netmap': Network_Mapper
+            #'netmap': Network_Mapper
         }
 
 
