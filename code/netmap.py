@@ -4,15 +4,14 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 import ipaddress
-from arg_parser import Argument_Manager as ArgParser
 from net_info   import get_subnet_mask, get_ip_range, get_buffer_size
-from type_hints import Raw_Packet
+from type_hints import Arg_Parser, Raw_Packet
 from display    import *
 
 
 class Network_Mapper:
 
-    def __init__(self, parser_manager:ArgParser) -> None:
+    def __init__(self, parser_manager:Arg_Parser) -> None:
         self._flags:dict = None
         self._get_argument_and_flags(parser_manager)
 
@@ -33,7 +32,7 @@ class Network_Mapper:
         except Exception as error:  print(unexpected_error(error))
 
 
-    def _get_argument_and_flags(self, parser_manager:ArgParser) -> None:
+    def _get_argument_and_flags(self, parser_manager:Arg_Parser) -> None:
         self._flags = {'ping': parser_manager.ping}
 
 

@@ -7,7 +7,7 @@
 import socket, ctypes, threading, select
 from pkt_dissector import dissect_tcp_packet
 from net_info      import get_default_iface
-from type_hints    import BPF_Instruction, BPF_Configured_Socket, Raw_Packet
+from type_hints    import BPF_Instruction, BPF_Configured_Socket
 
 
 class Sniffer:

@@ -5,12 +5,11 @@
 
 
 import socket, random, time, sys
-from arg_parser  import Argument_Manager as ArgParser
 from sniffer     import Sniffer
 from net_info    import get_ports
 from pkt_sender  import send_layer_3_packet
 from pkt_builder import TCP, IP
-from type_hints  import Raw_Packet
+from type_hints  import Arg_Parser, Raw_Packet
 from display     import *
 
 
@@ -27,7 +26,7 @@ class Port_Scanner:
 
     __slots__ = ('_target_ip', '_args', '_target_ports', '_responses')
 
-    def __init__(self, parser_manager:ArgParser) -> None:
+    def __init__(self, parser_manager:Arg_Parser) -> None:
         self._target_ip:str        = None
         self._args:dict            = None
         self._target_ports:dict    = None
@@ -44,7 +43,7 @@ class Port_Scanner:
 
 
 
-    def _get_argument_and_flags(self, parser_manager:ArgParser) -> None:
+    def _get_argument_and_flags(self, parser_manager:Arg_Parser) -> None:
         self._target_ip  = socket.gethostbyname(parser_manager.host)
         self._args = {
             'show':   parser_manager.show,

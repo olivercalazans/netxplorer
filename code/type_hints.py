@@ -4,10 +4,11 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket
+import socket, argparse
 from typing import NewType
 
 
+Arg_Parser = NewType('Arg_Parser', argparse.ArgumentParser)
 
 Raw_Packet = NewType('Raw_Packet', bytes)
 
