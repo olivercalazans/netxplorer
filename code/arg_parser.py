@@ -7,41 +7,70 @@
 import argparse
 
 
-PROTOCOLS   = ['ftp', 'ssh', 'http', 'https']
+# PORTSCANNER ============================================================================================
+def pscan_definitions(parser:argparse.ArgumentParser) -> None:
+    parser.add_argument('host', type=str, help='Target IP/Hostname')
+    parser.add_argument('-s', '--show', action='store_true', help='Display all statuses, both open and closed')
+    parser.add_argument('-r', '--random', action='store_true', help='Use the ports in random order')
+    parser.add_argument('-p', '--port', type=str, help='Specify a port to scan')
+    parser.add_argument('-a', '--all', action='store_true', help='Scan all ports')
+    parser.add_argument('-d', '--delay', nargs='?', const=True, default=False, help='Add a delay between packet transmissions')
+
+
+
+def get_portscan_arguments(parser:argparse.ArgumentParser) -> dict:
+    return {
+        'host':   parser.host,
+        'show':   parser.show,
+        'port':   parser.port,
+        'all':    parser.all,
+        'random': parser.random,
+        'delay':  parser.delay,
+    }
+
+
+
+# BANNER GRABBER ========================================================================================
+def bgrab_definitions(parser:argparse.ArgumentParser) -> None:
+    PROTOCOLS = ['ftp', 'ssh', 'http', 'https']
+    parser.add_argument('host', type=str, help='Target IP/Hostname')
+    parser.add_argument('protocol', type=str, choices=PROTOCOLS, help='Protocol')
+    parser.add_argument('-p', '--port', type=str, help='Specify a port to grab the banners')
+
+
+def get_bgrab_arguments(parser:argparse.ArgumentParser) -> dict:
+    return {
+        'host':     parser.host,
+        'protocol': parser.protocol,
+        'port':     parser.port
+    }
+
+
+# NETWORK MAPPER ========================================================================================
+def netmap_definitions(parser:argparse.ArgumentParser) -> None:
+    parser.add_argument('-p', '--port', action='store_true', help='Use ping instead of an ARP packet')
+
+
+def get_netmap_arguments(parser:argparse.ArgumentParser) -> dict:
+    return{
+        'port': parser.port
+    }
+
+
+
+# ===============================================================================================================================
+
 DEFINITIONS = {
-    'pscan': [
-        ('arg',   'host', 'Target IP/Hostname'),
-        ('bool',  '-s', '--show',   'Display all statuses, both open and closed'),
-        ('bool',  '-r', '--random', 'Use the ports in random order'),
-        ('value', '-p', '--port',   str, 'Specify a port to scan'),
-        ('bool',  '-a', '--all',    'Scan all ports'),
-        ('opt',   '-d', '--delay',  'Add a delay between packet transmissions'),
-        ],
-
-    'banner': [
-        ('arg',    'host',     'Target IP/Hostname'),
-        ('choice', 'protocol', PROTOCOLS, 'Protocol'),
-        ('value',  '-p', '--port', str, 'Specify a port to grab the banners')
-        ],
-
-    'netmap': [
-        ('bool', '-p', '--ping', 'Use ping instead of an ARP packet')
-        ]
+    'pscan':  {'definitions': pscan_definitions,  'values': get_portscan_arguments},
+    'banner': {'definitions': bgrab_definitions,  'values': get_bgrab_arguments},
+    'netmap': {'definitions': netmap_definitions, 'values': get_netmap_arguments}
 }
-    
+
+
 # Method that will be called by the class
-def parse(command:str, arguments:list) -> argparse.Namespace:
-    parser      = argparse.ArgumentParser(description="Argument Manager")
-    definitions = DEFINITIONS.get(command)
-    create_arguments(parser, definitions)
-    return parser.parse_args(arguments)
-
-
-def create_arguments(parser:argparse.ArgumentParser, definitions:list[tuple]) -> None:
-    for arg in definitions:
-        match arg[0]:
-            case 'bool':  parser.add_argument(arg[1], arg[2], action="store_true", help=arg[3])
-            case 'value': parser.add_argument(arg[1], arg[2], type=arg[3], help=arg[4])
-            case 'opt':   parser.add_argument(arg[1], arg[2], nargs='?', const=True, default=False, help=arg[3])
-            case 'arg':   parser.add_argument(arg[1], type=str, help=arg[2])
-            case _:       parser.add_argument(arg[1], type=str, choices=arg[2], help=arg[3])
+def validate_and_get_flags(command:str, arguments:list) -> argparse.Namespace:
+    parser         = argparse.ArgumentParser(description='Argument Manager')
+    specific_class = DEFINITIONS.get(command)
+    specific_class['definitions'](parser)
+    parser.parse_args(arguments)
+    return specific_class['values'](parser)

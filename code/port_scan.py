@@ -4,12 +4,12 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket, random, time, sys
+import random, time, sys
 from sniffer     import Sniffer
 from net_info    import get_ports
 from pkt_sender  import send_layer_3_packet
 from pkt_builder import TCP, IP
-from type_hints  import Arg_Parser, Raw_Packet
+from type_hints  import Raw_Packet
 from display     import *
 
 
@@ -26,12 +26,11 @@ class Port_Scanner:
 
     __slots__ = ('_target_ip', '_args', '_target_ports', '_responses')
 
-    def __init__(self, parser_manager:Arg_Parser) -> None:
-        self._target_ip:str        = None
-        self._args:dict            = None
+    def __init__(self, arguments:dict) -> None:
+        self._target_ip:str        = arguments.pop('host')
+        self._args:dict            = arguments
         self._target_ports:dict    = None
         self._responses:list[dict] = None
-        self._get_argument_and_flags(parser_manager)
 
 
 
@@ -40,18 +39,6 @@ class Port_Scanner:
     
     def __exit__(self, exc_type, exc_value, traceback):
         return False
-
-
-
-    def _get_argument_and_flags(self, parser_manager:Arg_Parser) -> None:
-        self._target_ip  = socket.gethostbyname(parser_manager.host)
-        self._args = {
-            'show':   parser_manager.show,
-            'port':   parser_manager.port,
-            'all':    parser_manager.all,
-            'random': parser_manager.random,
-            'delay':  parser_manager.delay,
-        }
 
 
 
