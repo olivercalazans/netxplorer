@@ -8,7 +8,7 @@ import sys
 from arg_parser import Argument_Manager as ArgParser
 from port_scan  import Port_Scanner
 from bgrab      import Banner_Grabbing
-#from netmap     import Network_Mapper
+from netmap     import Network_Mapper
 from display    import *
 
 
@@ -20,14 +20,13 @@ class Main:
         self._commands_dict  = {
             'pscan':  Port_Scanner,
             'banner': Banner_Grabbing,
-            #'netmap': Network_Mapper
+            'netmap': Network_Mapper
         }
 
 
     def _handle_user(self) -> None:
         try:   self._validate_input()
         except KeyboardInterrupt:  sys.exit()
-        except PermissionError:    print(yellow("Run this command as root (sudo)."))
         except IndexError:         print(yellow("Missing command name"))
         except Exception as error: print(unexpected_error(error))
 
