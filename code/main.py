@@ -8,7 +8,7 @@ import sys
 from arg_parser import Argument_Manager as ArgParser
 from port_scan  import Port_Scanner
 from bgrab      import Banner_Grabbing
-from netmap     import Network_Mapper
+#from netmap     import Network_Mapper
 from display    import *
 
 
@@ -20,7 +20,7 @@ class Main:
         self._commands_dict  = {
             'pscan':  Port_Scanner,
             'banner': Banner_Grabbing,
-            'netmap': Network_Mapper
+#            'netmap': Network_Mapper
         }
 
 
