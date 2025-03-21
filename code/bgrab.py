@@ -11,6 +11,8 @@ from display    import *
 
 class Banner_Grabber:
 
+    __slots__ = ('_host', '_protocol', '_port')
+
     def __init__(self, parser_manager:Arg_Parser) -> None:
         self._host:str     = None
         self._protocol:str = None
@@ -68,14 +70,14 @@ def err_icon() -> str:
 # FUNCTIONS ==================================================================================================
 
 def ftp_banner_grabbing(host:str, port:int) -> None:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.settimeout(5)
-            sock.connect((host, port))
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(5)
+        sock.connect((host, port))
 
-            banner = sock.recv(1024).decode('utf-8').strip()
+        banner = sock.recv(1024).decode('utf-8').strip()
 
-            if banner: print(f'{ok_icon()} FTP Banner de {host}:{port} -> {banner}')
-            else:      print(f'{err_icon()} Nenhum banner recebido de {host}:{port}')
+        if banner: print(f'{ok_icon()} FTP Banner de {host}:{port} -> {banner}')
+        else:      print(f'{err_icon()} Nenhum banner recebido de {host}:{port}')
 
 
 
