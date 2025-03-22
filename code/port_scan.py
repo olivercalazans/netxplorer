@@ -5,6 +5,7 @@
 
 
 import random, time, sys
+from socket      import gethostbyname
 from sniffer     import Sniffer
 from net_info    import get_ports
 from pkt_sender  import send_layer_3_packet
@@ -27,7 +28,7 @@ class Port_Scanner:
     __slots__ = ('_target_ip', '_args', '_target_ports', '_responses')
 
     def __init__(self, arguments:dict) -> None:
-        self._target_ip:str        = arguments.pop('host')
+        self._target_ip:str        = gethostbyname(arguments.pop('host'))
         self._args:dict            = arguments
         self._target_ports:dict    = None
         self._responses:list[dict] = None
