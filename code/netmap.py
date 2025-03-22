@@ -11,6 +11,8 @@ from display    import *
 
 class Network_Mapper:
 
+    __slots__ = ('_flags')
+
     def __init__(self, arguments:dict) -> None:
         self._flags:dict = arguments
 

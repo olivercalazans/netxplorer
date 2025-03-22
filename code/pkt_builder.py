@@ -71,11 +71,13 @@ def pseudo_header(dst_ip:str, tcp_length:int) -> bytes:
 
 
 
-def checksum(headers) -> int:
-    s = 0
-    for i in range(0, len(headers), 2):
-        w = (headers[i] << 8) + (headers[i+1] if i+1 < len(headers) else 0)
-        s += w
-    s = (s >> 16) + (s & 0xffff)
-    s += (s >> 16)
-    return ~s & 0xffff
+def checksum(data:bytes) -> int:
+    if len(data) % 2:
+        data += b"\x00"  # Padding
+
+    total = 0
+    for i in range(0, len(data), 2):
+        total += (data[i] << 8) + data[i+1]
+    
+    total = (total & 0xFFFF) + (total >> 16)
+    return ~total & 0xFFFF
