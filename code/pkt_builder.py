@@ -5,7 +5,7 @@
 
 
 import socket, struct, random, os
-from net_info   import get_my_ip_address
+from net_info import get_my_ip_address
 
 
 

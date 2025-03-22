@@ -5,8 +5,6 @@
 
 
 import socket, fcntl, struct, re, subprocess, ipaddress
-from display import *
-
 
 
 def get_default_iface() -> str:

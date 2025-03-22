@@ -13,5 +13,22 @@ def red(message:str) -> str:
 def yellow(message:str) -> str:
     return '\033[33m' + message + '\033[0m'
 
-def unexpected_error(error:str) -> str:
-    return red('Unexpected error') + f'\nERROR: {error}'
+def display_error(error:str) -> None:
+    print(F'{yellow("ERROR")}: {error}')
+
+def display_unexpected_error(error:str) -> None:
+    print(f'{red("Unexpected error")}: {error}')
+
+def display_process_stopped() -> None:
+    print(red('Process stopped'))
+
+
+# BANNER GRABBING ================================
+def ok_icon() -> str:
+    return f'[{green("+")}]'
+
+def err_icon() -> str:
+    return f'[{red("x")}]'
+
+def display_bgrab_error(message:str, error:str) -> None:
+    print(f'{err_icon()} {yellow(message)}: {error}')

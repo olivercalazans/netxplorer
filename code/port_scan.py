@@ -48,9 +48,9 @@ class Port_Scanner:
             self._prepare_target_ports()
             self._send_and_receive()
             self._display_result()
-        except KeyboardInterrupt:   print(f'\n{red("Process stopped")}')
-        except ValueError as error: print(f'{yellow("Error")}: {error}')
-        except Exception as error:  print(unexpected_error(error))
+        except KeyboardInterrupt:   display_process_stopped()
+        except ValueError as error: display_error(error)
+        except Exception as error:  display_unexpected_error(error)
 
 
 

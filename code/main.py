@@ -8,7 +8,7 @@ import sys
 from arg_parser import validate_and_get_flags
 from port_scan  import Port_Scanner
 from bgrab      import Banner_Grabber
-#from netmap     import Network_Mapper
+from netmap     import Network_Mapper
 from display    import *
 
 
@@ -17,7 +17,7 @@ class Main:
     COMMAND_DICT = {
         'pscan':  Port_Scanner,
         'banner': Banner_Grabber,
-#        'netmap': Network_Mapper
+        'netmap': Network_Mapper
     }
 
     __slots__ = ('_command', '_arguments')
@@ -30,8 +30,8 @@ class Main:
     def _handle_user(self) -> None:
         try:   self._validate_input()
         except KeyboardInterrupt:  sys.exit()
-        except IndexError:         print(yellow("Missing command name"))
-        except Exception as error: print(unexpected_error(error))
+        except IndexError:         display_error('Missing command name')
+        except Exception as error: display_unexpected_error(error)
 
     
     def _validate_input(self) -> None:
