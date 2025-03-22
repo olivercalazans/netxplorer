@@ -13,7 +13,7 @@ class Banner_Grabber:
     __slots__ = ('_host', '_protocol', '_port')
 
     def __init__(self, arguments:dict) -> None:
-        self._host:str     = arguments['host']
+        self._host:str     = socket.gethostbyname(arguments['host'])
         self._protocol:str = arguments['protocol']
         self._port:int     = arguments['port']
 
@@ -29,10 +29,11 @@ class Banner_Grabber:
 
     def _execute(self) -> None:
         try:   self._grab_banners_on_the_protocol()
-        except ConnectionRefusedError as error: print(f'{err_icon()} {yellow("Connection refused")}: {error}')
-        except socket.timeout as error:         print(f'{err_icon()} {yellow("Timeout")}')
-        except socket.error as error:           print(f'{err_icon()} {yellow("Socket error")}:\n{error}')
-        except Exception as error:              print(f'{unexpected_error(error)}')
+        except KeyboardInterrupt:               display_process_stopped()
+        except ConnectionRefusedError as error: display_bgrab_error('Connection refused', error)
+        except socket.timeout as error:         display_bgrab_error('Timeout', error)
+        except socket.error as error:           display_bgrab_error('Socket error', error)
+        except Exception as error:              display_unexpected_error(error)
 
 
 
@@ -52,16 +53,6 @@ class Banner_Grabber:
             'http':  {'func': http_banner_grabbing,  'port': 80},
             'https': {'func': https_banner_grabbing, 'port': 443}
         }
-
-
-
-# ICONS ======================================================================================================
-
-def ok_icon() -> str:
-    return f'[{green("+")}]'
-
-def err_icon() -> str:
-    return f'[{red("x")}]'
 
 
 # FUNCTIONS ==================================================================================================

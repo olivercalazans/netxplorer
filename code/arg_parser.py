@@ -5,6 +5,7 @@
 
 
 import argparse
+from socket import gethostbyname
 
 
 # PORTSCANNER ============================================================================================
