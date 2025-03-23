@@ -5,9 +5,8 @@
 
 
 import socket, ctypes, threading, select
-from pkt_dissector import dissect_tcp_packet
-from net_info      import get_default_iface
-from type_hints    import BPF_Instruction, BPF_Configured_Socket
+from net_info   import get_default_iface
+from type_hints import BPF_Instruction, BPF_Configured_Socket
 
 
 class Sniffer:
@@ -46,8 +45,7 @@ class Sniffer:
             readable, _, _= select.select([self._sniffer], [], [], 0.001)
             if readable:
                 packet, _ = self._sniffer.recvfrom(65535)
-                data      = dissect_tcp_packet(packet)
-                self._responses.append(data)
+                self._responses.append(packet)
 
 
 

@@ -19,7 +19,7 @@ TCP_FLAG_MAP = {
 IP_HEADER_STRUCT  = struct.Struct('!BBHHHBBH4s4s')
 TCP_HEADER_STRUCT = struct.Struct('!HHLLBBHHH')
 
-def dissect_tcp_packet(packet:Raw_Packet) -> dict|None:
+def dissect_tcp_packet(packet:Raw_Packet) -> tuple[int, str]:
     try:
         packet:Raw_Packet            = memoryview(packet)
         ip_header:tuple[int, bytes]  = IP_HEADER_STRUCT.unpack(packet[14:34])
@@ -27,7 +27,7 @@ def dissect_tcp_packet(packet:Raw_Packet) -> dict|None:
         source_port:int              = tcp_header[0]
         tcp_flags:str                = TCP_FLAG_MAP.get(tcp_header[5] & (0b00111111), 'Filtered')
         
-        return {'port': source_port, 'flags': tcp_flags}
+        return (source_port, tcp_flags)
     except (IndexError, struct.error, ValueError):
         return None
 
