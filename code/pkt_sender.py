@@ -17,3 +17,4 @@ def send_layer_3_packet(packet:Raw_Packet, target_ip:str, port:int) -> None:
 def send_ping(packet:Raw_Packet, ip:str) -> None:
     sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
     sock.sendto(packet, (ip, 1))
+    sock.close()

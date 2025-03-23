@@ -5,13 +5,14 @@
 
 
 import random, time, sys
-from socket      import gethostbyname
-from sniffer     import Sniffer
-from net_info    import get_ports
-from pkt_sender  import send_layer_3_packet
-from pkt_builder import TCP, IP
-from type_hints  import Raw_Packet
-from display     import *
+from socket        import gethostbyname
+from sniffer       import Sniffer
+from net_info      import get_ports
+from pkt_sender    import send_layer_3_packet
+from pkt_builder   import TCP, IP
+from pkt_dissector import dissect_tcp_packet
+from type_hints    import Raw_Packet
+from display       import *
 
 
 class Port_Scanner:
@@ -110,13 +111,14 @@ class Port_Scanner:
 
     def _display_result(self) -> None:
         open_ports = 0
-        for pkt_info in self._responses:
-            if pkt_info['flags'] != 'SYN-ACK' and self._args['show'] is False:
+        for packet in self._responses:
+            port, flags = dissect_tcp_packet(packet)
+
+            if flags != 'SYN-ACK' and self._args['show'] is False:
                 continue
-            if pkt_info['flags'] == 'SYN-ACK': open_ports += 1
-            flags       = pkt_info['flags']
+
+            if flags == 'SYN-ACK': open_ports += 1
             status      = self.STATUS.get(flags)
-            port        = pkt_info['port']
             description = self._target_ports[port]
             print(f'Status: {status:>17} -> {port:>5} - {description}')
         print(f'Open ports: {open_ports}/{len(self._target_ports)}')

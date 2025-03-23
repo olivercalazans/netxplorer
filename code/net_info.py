@@ -13,56 +13,32 @@ def get_default_iface() -> str:
 
 
 
-def temporary_socket(code:int, interface:str, start:int, end:int) -> str:
+def temporary_socket(code:int, interface=get_default_iface()) -> str:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        return fcntl.ioctl(sock.fileno(), code,
+        return socket.inet_ntoa(
+            fcntl.ioctl(sock.fileno(), code,
             struct.pack('256s', interface[:15].encode('utf-8'))
-        )[start:end]
+        )[20:24])
 
 
 
-def get_my_ip_address(interface:str=get_default_iface()) -> str|None:
-    try:
-        raw_bytes = temporary_socket(0x8915, interface, 20, 24)
-        return socket.inet_ntoa(raw_bytes)
-    except Exception:
-        return None
+def get_my_ip_address() -> str|None:
+    try:   return temporary_socket(0x8915)
+    except Exception: return None
 
 
 
-def get_subnet_mask(interface:str=get_default_iface()) -> str|None:
-    try:
-        raw_bytes = temporary_socket(0x891b, interface, 20, 24)
-        return socket.inet_ntoa(raw_bytes)
-    except Exception:
-        return None
-
-
-
-def get_mac_from_iface(interface:str=get_default_iface()) -> str|None:
-    try:
-        raw_bytes = temporary_socket(0x8927, interface, 18, 24)
-        return ":".join("%02x" % b for b in raw_bytes)
-    except Exception:
-        return None
+def get_subnet_mask() -> str|None:
+    try:   return temporary_socket(0x891b)
+    except Exception: return None
 
 
 
 def get_ip_range() -> ipaddress.IPv4Address:
     ip_range = ipaddress.IPv4Network(f'{get_my_ip_address()}/{get_subnet_mask()}', strict=False)
-    return list(ip_range.hosts())
-
-
-
-def get_buffer_size() -> int:
-    result = subprocess.run(['sudo', 'sysctl', 'net.core.wmem_max'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-    if result.returncode == 0:
-        result = result.stdout.split()[-1].strip()
-        return int(result)
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as temp_sock:
-        return temp_sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
+    ip_range = [str(ip) for ip in ip_range.hosts()]
+    ip_range.remove(get_my_ip_address())
+    return ip_range
 
 
 

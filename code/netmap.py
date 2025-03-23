@@ -4,9 +4,11 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-from net_info   import get_subnet_mask, get_ip_range, get_buffer_size
-from pkt_sender import send_ping
-from display    import *
+from sniffer     import Sniffer
+from pkt_builder import ICMP
+from net_info    import get_ip_range
+from pkt_sender  import send_ping
+from display     import *
 
 
 class Network_Mapper:
@@ -38,4 +40,6 @@ class Network_Mapper:
     # PING ---------------------------------------------------------------------------
 
     def _ping_sweep(self) -> None:
-        ...
+        PACKET = ICMP()
+        for ip in get_ip_range():
+            send_ping(PACKET, ip)
