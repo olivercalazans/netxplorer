@@ -56,7 +56,7 @@ class Sniffer:
 
 
 
-    def _get_result(self) -> list[dict]:
+    def _get_packets(self) -> list[dict]:
         self._stop_sniffing()
         return self._responses
 
@@ -82,26 +82,29 @@ class Sniffer:
 
 
     def _define_filter(self) -> BPF_Instruction:
-        FILTERS = {
-            'IP':  self._get_ip_filter_parameters(),
-            'ARP': [(0x15, 0, 3, 0x0806)] #.......: Jump if EtherType == ARP (0x0806)
-        }
-        filter  = [(0x28, 0, 0, 12)] #............: Load EtherType (offset 12)
-        filter += FILTERS.get(self._protocol) #...: Specific parameters
-        filter += [(0x06, 0, 0, 0xFFFF), #........: Accept packet
-                   (0x06, 0, 0, 0x0000)] #........: Discard packet
+        filter  = [(0x28, 0, 0, 12)] #.......: Load EtherType (offset 12)
+        filter += self._get_parameters() #...: Specific parameters
+        filter += [(0x06, 0, 0, 0xFFFF), #...: Accept packet
+                   (0x06, 0, 0, 0x0000)] #...: Discard packet
         return filter
+    
+
+
+    def _get_parameters(self) -> list[tuple]:
+        match self._protocol:
+            case 'TCP':  return self._get_tcp_filter_parameters()
+            case 'ICMP': return self._get_icmp_parameters()
 
 
 
-    def _get_ip_filter_parameters(self) -> BPF_Instruction:
+    def _get_tcp_filter_parameters(self) -> BPF_Instruction:
         port_jumps = self._create_port_jumps()
         num        = len(port_jumps)
         parameters = [
-            (0x15, 0, num + 4, 2048), #...: Jump if EtherType == IPv4
-            (0x30, 0, 0, 23), #...........: Load IP Protocol
-            (0x15, 0, num + 2, 6), #......: Jump if Protocol == TCP
-            (0x28, 0, 0, 36) #............: Load Destination Port
+            (0x15, 0, num + 4, 2048), #...: Jump if EtherType != IPv4
+            (0x30, 0, 0,       23), #.....: Load IP Protocol
+            (0x15, 0, num + 2, 6), #......: Jump if Protocol != TCP
+            (0x28, 0, 0,       36) #......: Load Destination Port
         ]
         return parameters + port_jumps
 
@@ -117,6 +120,16 @@ class Sniffer:
         return port_parameters
 
 
+
+    @staticmethod
+    def _get_icmp_parameters() -> BPF_Instruction:
+        return [
+            (0x15, 0, 5, 2048), #...: Jump if EtherType == IPv4
+            (0x30, 0, 0, 23), #.....: Load IP Protocol
+            (0x15, 0, 3, 1), #......: Jump if protocol != ICMP
+            (0x30, 0, 0, 20), #.....: Load ICMP header
+            (0x15, 0, 1, 0), #......: Jump if != Echo Reply
+        ]
 
 
 # Define a BPF filter structure
