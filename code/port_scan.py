@@ -68,10 +68,10 @@ class Port_Scanner:
 
     def _send_and_receive(self) -> None:
         src_ports = ports_to_sniff = [random.randint(10000, 65535) for _ in self._target_ports]
-        with Sniffer('IP', ports_to_sniff) as sniffer:
+        with Sniffer('TCP', ports_to_sniff) as sniffer:
             self._send_packets(src_ports)
             time.sleep(3)
-            self._responses = sniffer._get_result()
+            self._responses = sniffer._get_packets()
 
 
 
