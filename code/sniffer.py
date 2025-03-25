@@ -13,7 +13,7 @@ class Sniffer:
 
     __slots__ = ('_protocol', '_ports', '_sniffer', '_running', '_thread', '_responses')
 
-    def __init__(self, protocol:str, ports:list) -> None:
+    def __init__(self, protocol:str, ports:list=None) -> None:
         self._protocol:str                  = protocol
         self._ports:list[int]               = ports
         self._sniffer:BPF_Configured_Socket = None

@@ -13,11 +13,11 @@ def get_default_iface() -> str:
 
 
 
-def temporary_socket(code:int, interface=get_default_iface()) -> str:
+def temporary_socket(OP_CODE:int, INTERFACE=get_default_iface()) -> str:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         return socket.inet_ntoa(
-            fcntl.ioctl(sock.fileno(), code,
-            struct.pack('256s', interface[:15].encode('utf-8'))
+            fcntl.ioctl(sock.fileno(), OP_CODE,
+            struct.pack('256s', INTERFACE[:15].encode('utf-8'))
         )[20:24])
 
 

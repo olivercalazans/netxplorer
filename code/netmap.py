@@ -16,12 +16,10 @@ from display       import *
 
 class Network_Mapper:
 
-    __slots__ = ('_flags')
+    __slots__ = ()
 
-    def __init__(self, arguments:dict) -> None:
-        self._flags:dict = arguments
-
-
+    def __init__(self, _) -> None:
+        pass
 
     def __enter__(self):
         return self
@@ -33,7 +31,7 @@ class Network_Mapper:
 
     def _execute(self) -> None:
         try:
-            self._ping_sweep()
+            self._perform_ping_sweep()
         except KeyboardInterrupt:   display_process_stopped()
         except ValueError as error: display_error(error)
         except Exception as error:  display_unexpected_error(error)
@@ -42,7 +40,7 @@ class Network_Mapper:
 
     # PING ---------------------------------------------------------------------------
 
-    def _performe_ping_sweep(self) -> None:
+    def _perform_ping_sweep(self) -> None:
         packets = None
         with Sniffer('ICMP') as sniffer:
             self._ping_sweep()
@@ -63,6 +61,6 @@ class Network_Mapper:
     @staticmethod
     def _display_ping_result(packets:list[Raw_Packet]) -> None:
         for pkt in packets:
-            src_ip = dissect_icmp_packet(pkt)
-            print(f'{green("Active Host")}: {src_ip}')
-        print(f'Total {len(packets)} active hosts')
+            src_ip, mac_addr = dissect_icmp_packet(pkt)
+            print(f'{green("Active Host")}: {src_ip:<15} - {mac_addr}')
+        print(f'Total: {len(packets)} active hosts')

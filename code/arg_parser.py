@@ -5,7 +5,6 @@
 
 
 import argparse
-from socket import gethostbyname
 
 
 # PORTSCANNER ============================================================================================
@@ -42,22 +41,12 @@ def validate_and_get_bgrab_arguments(parser:argparse.ArgumentParser, arguments:l
     }
 
 
-# NETWORK MAPPER ========================================================================================
-def validate_and_get_netmap_arguments(parser:argparse.ArgumentParser, arguments:list) -> dict:
-    parser.add_argument('-p', '--port', action='store_true', help='Use ping instead of an ARP packet')
-    parser = parser.parse_args(arguments)
-    return{
-        'port': parser.port
-    }
-
-
 
 # ===============================================================================================================================
 
 DEFINITIONS = {
     'pscan':  validate_and_get_pscan_arguments,
     'banner': validate_and_get_bgrab_arguments,
-    'netmap': validate_and_get_netmap_arguments,
 }
 
 

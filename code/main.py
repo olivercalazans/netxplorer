@@ -47,7 +47,9 @@ class Main:
 
 
     def _validate_arguments(self) -> None:
-        arguments = validate_and_get_flags(self._command, self._arguments)
+        arguments = None
+        if self._command != 'netmap':
+            arguments = validate_and_get_flags(self._command, self._arguments)
         self._run_command(arguments)
 
 
