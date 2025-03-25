@@ -14,7 +14,7 @@ TCP_HEADER_STRUCT = struct.Struct('!HHLLBBHHH')
 TCP_FLAG_MAP      = {
         0b00010010: 'SYN-ACK', # (0b00000010 + 0b00010000)
         0b00000010: 'SYN',
-        0b00010100: 'RST-ACK', # RST-ACK (0b00000100 + 0b00010000)
+        0b00010100: 'RST-ACK', # (0b00000100 + 0b00010000)
         0b00000100: 'RST',
         0b00000001: 'FIN'
     }
@@ -41,7 +41,8 @@ def dissect_tcp_packet(packet:Raw_Packet) -> tuple[int, str]:
 
 def dissect_icmp_packet(packet:Raw_Packet) -> str:
     packet:Raw_Packet    = memoryview(packet)
+    src_mac:str          = ":".join("%02x" % b for b in packet[6:12])
     ip_header:memoryview = packet[14:34]
     src_ip:bytes         = struct.unpack('!4s', ip_header[12:16])[0]
     src_ip:str           = socket.inet_ntoa(src_ip)
-    return src_ip
+    return src_ip, src_mac
