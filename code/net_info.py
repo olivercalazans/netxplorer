@@ -42,6 +42,13 @@ def get_ip_range() -> ipaddress.IPv4Address:
 
 
 
+def get_host_name(ip:str) -> str:
+    try:    host_name = socket.gethostbyaddr(ip)[0]
+    except: host_name = 'Unknown'
+    return f'{ip} - {host_name}'
+
+
+
 def get_ports(port_type='all') -> dict:
     match port_type:
         case 'common':   return get_common_ports()
