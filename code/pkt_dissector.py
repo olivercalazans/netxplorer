@@ -4,7 +4,8 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import struct, socket
+import struct
+import socket
 from type_hints import Raw_Packet
 
 
