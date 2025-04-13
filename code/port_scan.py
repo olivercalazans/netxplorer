@@ -4,10 +4,12 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import random, time, sys
+import random
+import time
+import sys
 from socket        import gethostbyname
 from sniffer       import Sniffer
-from net_info      import get_ports
+from net_info      import get_ports, get_host_name
 from pkt_sender    import send_layer_3_packet
 from pkt_builder   import TCP, IP
 from pkt_dissector import dissect_tcp_packet
@@ -110,6 +112,7 @@ class Port_Scanner:
 
 
     def _display_result(self) -> None:
+        self._display_header(self._target_ip)
         open_ports = 0
         for packet in self._responses:
             port, flags = dissect_tcp_packet(packet)
@@ -122,3 +125,10 @@ class Port_Scanner:
             description = self._target_ports[port]
             print(f'Status: {status:>17} -> {port:>5} - {description}')
         print(f'Open ports: {open_ports}/{len(self._target_ports)}')
+
+    
+
+    @staticmethod
+    def _display_header(ip:str) -> None:
+        hostname = get_host_name(ip)
+        print(f'IP: {ip} - Hostname: {hostname}')

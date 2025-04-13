@@ -4,7 +4,12 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket, fcntl, struct, re, subprocess, ipaddress
+import socket
+import fcntl
+import struct
+import re
+import subprocess
+import ipaddress
 
 
 def get_default_iface() -> str:
@@ -43,9 +48,8 @@ def get_ip_range() -> ipaddress.IPv4Address:
 
 
 def get_host_name(ip:str) -> str:
-    try:    host_name = socket.gethostbyaddr(ip)[0]
-    except: host_name = 'Unknown'
-    return f'{ip} - {host_name}'
+    try:    return socket.gethostbyaddr(ip)[0]
+    except: return 'Unknown'
 
 
 

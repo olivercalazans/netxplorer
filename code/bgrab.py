@@ -4,7 +4,8 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import socket, ssl
+import socket
+import ssl
 from display import *
 
 

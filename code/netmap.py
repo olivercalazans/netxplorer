@@ -7,7 +7,7 @@
 import time
 from sniffer       import Sniffer
 from pkt_builder   import ICMP
-from net_info      import get_ip_range
+from net_info      import get_ip_range, get_host_name
 from pkt_sender    import send_ping
 from pkt_dissector import dissect_icmp_packet
 from type_hints    import Raw_Packet
@@ -62,5 +62,6 @@ class Network_Mapper:
     def _display_ping_result(packets:list[Raw_Packet]) -> None:
         for pkt in packets:
             src_ip, mac_addr = dissect_icmp_packet(pkt)
-            print(f'{green("Active Host")}: {src_ip:<15} - {mac_addr}')
+            hostname         = get_host_name(src_ip)
+            print(f'{green("Active Host")}: {src_ip:<15} - {mac_addr} - {hostname}')
         print(f'Total: {len(packets)} active hosts')
