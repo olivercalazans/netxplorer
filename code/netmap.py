@@ -44,7 +44,7 @@ class Network_Mapper:
         packets = None
         with Sniffer('ICMP') as sniffer:
             self._ping_sweep()
-            time.sleep(2)
+            time.sleep(3)
             packets = sniffer._get_packets()
         self._display_ping_result(packets)
     
@@ -60,8 +60,9 @@ class Network_Mapper:
 
     @staticmethod
     def _display_ping_result(packets:list[Raw_Packet]) -> None:
+        print(green(f'IP Address{8*" "}MAC Address{9*" "}Hostname'))
         for pkt in packets:
             src_ip, mac_addr = dissect_icmp_packet(pkt)
             hostname         = get_host_name(src_ip)
-            print(f'{green("Active Host")}: {src_ip:<15} - {mac_addr} - {hostname}')
+            print(f'{src_ip:<15} - {mac_addr} - {hostname}')
         print(f'Total: {len(packets)} active hosts')
