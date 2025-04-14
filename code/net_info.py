@@ -48,7 +48,9 @@ def get_ip_range() -> ipaddress.IPv4Address:
 
 
 def get_host_name(ip:str) -> str:
-    try:    return socket.gethostbyaddr(ip)[0]
+    try:
+        hostname = socket.gethostbyaddr(ip)[0]
+        return hostname[:-4] if hostname[-4:] == '.lan' else hostname
     except: return 'Unknown'
 
 
