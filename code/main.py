@@ -5,11 +5,11 @@
 
 
 import sys
-from arg_parser import validate_and_get_flags
+from arg_parser import ArgParser_Manager
+from data_class import Data
 from port_scan  import Port_Scanner
 from bgrab      import Banner_Grabber
 from netmap     import Network_Mapper
-from display    import *
 
 
 class Main:
@@ -20,42 +20,47 @@ class Main:
         'netmap': Network_Mapper
     }
 
-    __slots__ = ('_command', '_arguments')
+    __slots__ = ('_data')
 
     def __init__(self) -> None:
-        self._command:str    = None
-        self._arguments:list = None
+        self._data:Data = Data()
+
+    
+    def __enter__(self):
+        self._get_data_from_system()
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
+    
+
+    def _get_data_from_system(self) -> None:
+        self._data._command_name = sys.argv[1]
+        self._data._arguments    = sys.argv[2:] if len(sys.argv) > 2 else list()
 
 
     def _handle_user(self) -> None:
-        try:   self._validate_input()
+        try:   self._verify_if_the_command_exists()
         except KeyboardInterrupt:  sys.exit()
-        except IndexError:         display_error('Missing command name')
-        except Exception as error: display_unexpected_error(error)
-
+        except IndexError:         print('Missing command name')
+        except Exception as error: print(f'ERROR: {error}')
     
-    def _validate_input(self) -> None:
-        self._command   = sys.argv[1]
-        self._arguments = sys.argv[2:] if len(sys.argv) > 2 else list()
-        self._verify_if_the_command_exists()
-
 
     def _verify_if_the_command_exists(self) -> None:
-        if    self._command in self.COMMAND_DICT: self._validate_arguments()
-        elif  self._command in ('--help', '-h'):  self._display_description()
-        else: print(f'{yellow("Unknown command")} "{self._command}"')
+        if    self._data._command_name in self.COMMAND_DICT: self._validate_arguments()
+        elif  self._data._command_name in ('--help', '-h'):  self._display_description()
+        else: print(f'Unknown command: {self._data._command_name}')
 
 
     def _validate_arguments(self) -> None:
-        arguments = None
-        if self._command != 'netmap':
-            arguments = validate_and_get_flags(self._command, self._arguments)
-        self._run_command(arguments)
+        if self._data._command_name!= 'netmap':
+            with ArgParser_Manager(self._data): ...
+        self._run_command()
 
 
-    def _run_command(self, arguments:dict) -> None:
-        strategy_class = self.COMMAND_DICT.get(self._command)
-        with strategy_class(arguments) as strategy:
+    def _run_command(self) -> None:
+        strategy_class = self.COMMAND_DICT.get(self._data._command_name)
+        with strategy_class(self._data) as strategy:
             strategy._execute()
 
 
@@ -64,13 +69,13 @@ class Main:
         print('Repository: https://github.com/olivercalazans/netexplorer\n'
               'NetXplorer CLI is a tool for network exploration\n'
               'Available commands:\n'
-              f'{green("pscan")}....: Portscaning\n'
-              f'{green("banner")}...: Banner Grabbing\n'
-              f'{green("netmap")}...: Network Mapping\n'
+              f'pscan....: Portscaning\n'
+              f'banner...: Banner Grabbing\n'
+              f'netmap...: Network Mapping\n'
               )
 
 
 
 if __name__ == '__main__':
-    user = Main()
-    user._handle_user()
+    with Main() as xplorer:
+        xplorer._handle_user()

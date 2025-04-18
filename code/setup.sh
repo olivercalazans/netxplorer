@@ -38,7 +38,7 @@ SCRIPTS_DIR=$(dirname "$(realpath "$0")")        # Directory containing the curr
 SOURCE_DIR=${SCRIPTS_DIR%/*}                     # Parent directory of the script's directory
 FILES=("arg_parser.py"                           # List of required Python scripts
        "bgrab.py"
-       "display.py"
+       "data_class.py"
        "main.py"
        "netmap.py"
        "net_info.py"
