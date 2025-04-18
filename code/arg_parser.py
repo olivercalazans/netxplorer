@@ -5,53 +5,60 @@
 
 
 import argparse
+from data_class import Data
 
 
-# PORTSCANNER ============================================================================================
-def validate_and_get_pscan_arguments(parser:argparse.ArgumentParser, arguments:list) -> dict:
-    parser.add_argument('host', type=str, help='Target IP/Hostname')
-    parser.add_argument('-s', '--show', action='store_true', help='Display all statuses, both open and closed')
-    parser.add_argument('-r', '--random', action='store_true', help='Use the ports in random order')
-    parser.add_argument('-p', '--port', type=str, help='Specify a port to scan')
-    parser.add_argument('-a', '--all', action='store_true', help='Scan all ports')
-    parser.add_argument('-d', '--delay', nargs='?', const=True, default=False, help='Add a delay between packet transmissions')
-    parser = parser.parse_args(arguments)
-    return {
-        'host':   parser.host,
-        'show':   parser.show,
-        'port':   parser.port,
-        'all':    parser.all,
-        'random': parser.random,
-        'delay':  parser.delay,
+class ArgParser_Manager:
+
+    __slots__ = ('_data', '_parser', '_definitions')
+
+    def __init__(self, data:Data):
+        self._data:Data   = data
+        self._parser      = argparse.ArgumentParser(description='Argument Manager')
+        self._definitions = {
+        'pscan':  self._validate_and_get_pscan_arguments,
+        'banner': self._validate_and_get_bgrab_arguments,
     }
 
 
-
-# BANNER GRABBER ========================================================================================
-def validate_and_get_bgrab_arguments(parser:argparse.ArgumentParser, arguments:list) -> dict:
-    PROTOCOLS = ['ftp', 'ssh', 'http', 'https']
-    parser.add_argument('host', type=str, help='Target IP/Hostname')
-    parser.add_argument('protocol', type=str, choices=PROTOCOLS, help='Protocol')
-    parser.add_argument('-p', '--port', type=str, help='Specify a port to grab the banners')
-    parser = parser.parse_args(arguments)
-    return {
-        'host':     parser.host,
-        'protocol': parser.protocol,
-        'port':     parser.port
-    }
+    def __enter__(self):
+        command_arg_manager = self._definitions.get(self._data._command_name)
+        command_arg_manager()
+        return self
 
 
-
-# ===============================================================================================================================
-
-DEFINITIONS = {
-    'pscan':  validate_and_get_pscan_arguments,
-    'banner': validate_and_get_bgrab_arguments,
-}
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
+    
 
 
-# Method that will be called by the main class
-def validate_and_get_flags(command:str, arguments:list) -> argparse.Namespace:
-    parser       = argparse.ArgumentParser(description='Argument Manager')
-    command_args = DEFINITIONS.get(command)
-    return command_args(parser, arguments)
+    def _validate_and_get_pscan_arguments(self) -> dict:
+        self._parser.add_argument('host', type=str, help='Target IP/Hostname')
+        self._parser.add_argument('-s', '--show', action='store_true', help='Display all statuses, both open and closed')
+        self._parser.add_argument('-r', '--random', action='store_true', help='Use the ports in random order')
+        self._parser.add_argument('-p', '--ports', type=str, help='Specify ports to scan')
+        self._parser.add_argument('-a', '--all', action='store_true', help='Scan all ports')
+        self._parser.add_argument('-d', '--delay', nargs='?', const=True, default=False, help='Add a delay between packet transmissions')
+        self._parser = self._parser.parse_args(self._data._arguments)
+
+        self._data.target_ip  = self._parser.host
+        self._data._arguments = {
+            'show':   self._parser.show,
+            'ports':  self._parser.ports,
+            'all':    self._parser.all,
+            'random': self._parser.random,
+            'delay':  self._parser.delay,
+        }
+
+
+
+    def _validate_and_get_bgrab_arguments(self) -> None:
+        PROTOCOLS = ['ftp', 'ssh', 'http', 'https']
+        self._parser.add_argument('host', type=str, help='Target IP/Hostname')
+        self._parser.add_argument('protocol', type=str, choices=PROTOCOLS, help='Protocol')
+        self._parser.add_argument('-p', '--port', type=str, help='Specify a port to grab the banners')
+        self._parser = self._parser.parse_args(self._data._arguments)
+
+        self._data.target_ip  = self._parser.host
+        self._data._ports     = self._parser.port
+        self._data._arguments = {'protocol': self._parser.protocol}

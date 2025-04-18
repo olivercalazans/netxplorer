@@ -6,17 +6,15 @@
 
 import socket
 import ssl
-from display import *
+from data_class import Data
 
 
 class Banner_Grabber:
 
-    __slots__ = ('_host', '_protocol', '_port')
+    __slots__ = ('_data')
 
-    def __init__(self, arguments:dict) -> None:
-        self._host:str     = socket.gethostbyname(arguments['host'])
-        self._protocol:str = arguments['protocol']
-        self._port:int     = arguments['port']
+    def __init__(self, data:dict) -> None:
+        self._data:Data = data
 
 
 
@@ -30,19 +28,18 @@ class Banner_Grabber:
 
     def _execute(self) -> None:
         try:   self._grab_banners_on_the_protocol()
-        except KeyboardInterrupt:               display_process_stopped()
-        except ConnectionRefusedError as error: display_bgrab_error('Connection refused', error)
-        except socket.timeout as error:         display_bgrab_error('Timeout', error)
-        except socket.error as error:           display_bgrab_error('Socket error', error)
-        except Exception as error:              display_unexpected_error(error)
+        except KeyboardInterrupt:               print('Process stopped')
+        except ConnectionRefusedError as error: print(f'Connection refused: {error}')
+        except socket.timeout as error:         print(f'Timeout: {error}')
+        except socket.error as error:           print(f'Socket error: {error}')
+        except Exception as error:              print(f'ERROR: {error}')
 
 
 
     def _grab_banners_on_the_protocol(self) -> None:
-        protocol = self._protocol_dictionary().get(self._protocol)
-        host     = socket.gethostbyname(self._host)
-        port     = self._port if self._port else protocol['port']
-        protocol['func'](host, port)
+        protocol = self._protocol_dictionary().get(self._data._arguments['protocol'])
+        port     = self._data._ports if self._data._ports else protocol['port']
+        protocol['func'](self._data._target_ip, port)
 
 
 
@@ -65,8 +62,8 @@ def ftp_banner_grabbing(host:str, port:int) -> None:
 
         banner = sock.recv(1024).decode('utf-8').strip()
 
-        if banner: print(f'{ok_icon()} FTP Banner de {host}:{port} -> {banner}')
-        else:      print(f'{err_icon()} Nenhum banner recebido de {host}:{port}')
+        if banner: print(f'[+] FTP Banner de {host}:{port} -> {banner}')
+        else:      print(f'[-] Nenhum banner recebido de {host}:{port}')
 
 
 
@@ -74,7 +71,7 @@ def ssh_banner_grabbing(host:str, port:int) -> None:
     with socket.create_connection((host, port), timeout=5) as sock:
         banner = sock.recv(1024).decode(errors="ignore")
         banner = banner.split(',')
-        print(f'{ok_icon()} SSH server banner')
+        print(f'[+] SSH server banner')
         for line in banner:
             if not line == '': print(f'  - {line.strip()}')
 
@@ -86,7 +83,7 @@ def http_banner_grabbing(host:str, port:int) -> None:
         sock.send(request.encode())
         response = sock.recv(4096).decode(errors='ignore')
 
-        print(green(f'{ok_icon()} HTTP server response:'))
+        print('[+] HTTP server response:')
         for line in response.split("\r\n"):
             if line == '': continue
             print(line)
@@ -103,11 +100,11 @@ def https_banner_grabbing(host:str, port:int) -> None:
             cert = ssock.getpeercert()
 
             if cert:
-                print(f'{ok_icon()} {host} SSL Certificate:')
+                print(f'[+] {host} SSL Certificate:')
                 for field, value in cert.items():
                     print(f'{field}: {value}')
             else:
-                print(yellow('No SSL certificates returned'))
+                print('No SSL certificates returned')
 
             print('HTTP header (if present):')
             ssock.send(b'GET / HTTP/1.1\r\nHost: ' + host.encode() + b'\r\n\r\n')

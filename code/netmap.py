@@ -11,7 +11,6 @@ from net_info      import get_ip_range, get_host_name
 from pkt_sender    import send_ping
 from pkt_dissector import dissect_icmp_packet
 from type_hints    import Raw_Packet
-from display       import *
 
 
 class Network_Mapper:
@@ -32,9 +31,8 @@ class Network_Mapper:
     def _execute(self) -> None:
         try:
             self._perform_ping_sweep()
-        except KeyboardInterrupt:   display_process_stopped()
-        except ValueError as error: display_error(error)
-        except Exception as error:  display_unexpected_error(error)
+        except KeyboardInterrupt:  print('Process stopped')
+        except Exception as error: print(f'ERROR: {error}')
 
 
 
@@ -60,7 +58,7 @@ class Network_Mapper:
 
     @staticmethod
     def _display_ping_result(packets:list[Raw_Packet]) -> None:
-        print(green(f'IP Address{8*" "}MAC Address{9*" "}Hostname'))
+        print(f'IP Address{8*" "}MAC Address{9*" "}Hostname')
         for pkt in packets:
             src_ip, mac_addr = dissect_icmp_packet(pkt)
             hostname         = get_host_name(src_ip)
