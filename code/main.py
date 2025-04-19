@@ -17,7 +17,9 @@ class Main:
     _instance = None
     
     def __new__(cls, *args, **kwargs):
-        return cls._instance if cls._instance else object().__new__(cls)
+        if cls._instance is None:
+            cls._instance = object().__new__(cls)
+        return cls._instance
 
 
     __slots__ = ('_data', '_commands')
