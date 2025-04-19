@@ -14,6 +14,12 @@ from type_hints import BPF_Instruction, BPF_Configured_Socket
 
 class Sniffer:
 
+    _instance = None
+    
+    def __new__(cls, *args, **kwargs):
+        return cls._instance if cls._instance else object().__new__(cls)
+    
+
     __slots__ = ('_protocol', '_ports', '_sniffer', '_running', '_thread', '_responses')
 
     def __init__(self, protocol:str, ports:list=None) -> None:

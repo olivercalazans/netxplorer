@@ -14,16 +14,21 @@ from netmap     import Network_Mapper
 
 class Main:
 
-    COMMAND_DICT = {
+    _instance = None
+    
+    def __new__(cls, *args, **kwargs):
+        return cls._instance if cls._instance else object().__new__(cls)
+
+
+    __slots__ = ('_data', '_commands')
+
+    def __init__(self) -> None:
+        self._data:Data     = Data()
+        self._commands:dict = {
         'pscan':  Port_Scanner,
         'banner': Banner_Grabber,
         'netmap': Network_Mapper
     }
-
-    __slots__ = ('_data')
-
-    def __init__(self) -> None:
-        self._data:Data = Data()
 
     
     def __enter__(self):
@@ -47,8 +52,8 @@ class Main:
     
 
     def _verify_if_the_command_exists(self) -> None:
-        if    self._data._command_name in self.COMMAND_DICT: self._validate_arguments()
-        elif  self._data._command_name in ('--help', '-h'):  self._display_description()
+        if    self._data._command_name in self._commands:   self._validate_arguments()
+        elif  self._data._command_name in ('--help', '-h'): self._display_description()
         else: print(f'Unknown command: {self._data._command_name}')
 
 
@@ -59,7 +64,7 @@ class Main:
 
 
     def _run_command(self) -> None:
-        strategy_class = self.COMMAND_DICT.get(self._data._command_name)
+        strategy_class = self._commands.get(self._data._command_name)
         with strategy_class(self._data) as strategy:
             strategy._execute()
 

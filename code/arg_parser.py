@@ -10,6 +10,12 @@ from data_class import Data
 
 class ArgParser_Manager:
 
+    _instance = None
+    
+    def __new__(cls, *args, **kwargs):
+        return cls._instance if cls._instance else object().__new__(cls)
+    
+
     __slots__ = ('_data', '_parser', '_definitions')
 
     def __init__(self, data:Data):

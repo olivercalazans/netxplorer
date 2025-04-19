@@ -15,6 +15,12 @@ from type_hints    import Raw_Packet
 
 class Network_Mapper:
 
+    _instance = None
+    
+    def __new__(cls, *args, **kwargs):
+        return cls._instance if cls._instance else object().__new__(cls)
+
+
     __slots__ = ()
 
     def __init__(self, _) -> None:
