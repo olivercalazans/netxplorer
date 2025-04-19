@@ -17,6 +17,12 @@ from type_hints    import Raw_Packet
 
 
 class Port_Scanner:
+    
+    _instance = None
+    
+    def __new__(cls, *args, **kwargs):
+        return cls._instance if cls._instance else object().__new__(cls)
+
 
     STATUS = {
         'SYN-ACK':  'OPENED',

@@ -10,6 +10,13 @@ from socket      import gethostbyname
 
 @dataclass(slots=True)
 class Data:
+
+    _instance = None
+    
+    def __new__(cls, *args, **kwargs):
+        return cls._instance if cls._instance else object().__new__(cls)
+    
+
     _command_name:str = None
     _arguments:list   = None
     _target_ip:str    = None 

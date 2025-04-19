@@ -11,6 +11,13 @@ from data_class import Data
 
 class Banner_Grabber:
 
+    _instance = None
+    
+    def __new__(cls, *args, **kwargs):
+        return cls._instance if cls._instance else object().__new__(cls)
+
+
+
     __slots__ = ('_data')
 
     def __init__(self, data:dict) -> None:
