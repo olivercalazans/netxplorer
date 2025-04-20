@@ -11,9 +11,8 @@ from data_class    import Data
 from sniffer       import Sniffer
 from net_info      import get_ports, get_host_name
 from pkt_sender    import send_layer_3_packet
-from pkt_builder   import TCP, IP
+from pkt_builder   import create_tcp_ip_packet
 from pkt_dissector import Packet_Dissector
-from type_hints    import Raw_Packet
 
 
 class Port_Scanner:
@@ -86,7 +85,7 @@ class Port_Scanner:
         delay_list = self._get_delay_time_list()
         index      = 1
         for delay, src_port, dst_port in zip(delay_list, src_ports, self._data._ports):
-            packet = self._create_packet(src_port, dst_port)
+            packet = create_tcp_ip_packet(self._data._target_ip, dst_port, src_port)
             send_layer_3_packet(packet, self._data._target_ip, dst_port)
 
             sys.stdout.write(f'\rPacket sent: {index}/{len(self._data._ports)} >> delay {delay:.2f}')
@@ -95,13 +94,6 @@ class Port_Scanner:
             time.sleep(delay)
             index += 1
         sys.stdout.write('\n')
-
-    
-
-    def _create_packet(self, src_port:int, dst_port:int) -> Raw_Packet:
-        ip_header  = IP(self._data._target_ip)
-        tcp_header = TCP(src_port, dst_port, self._data._target_ip)
-        return Raw_Packet(ip_header + tcp_header)
 
 
 

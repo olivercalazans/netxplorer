@@ -8,9 +8,20 @@ import socket
 import struct
 import random
 import os
-from net_info import get_my_ip_address
+from net_info   import get_my_ip_address
+from type_hints import Raw_Packet
 
 
+# BUILDERS ===================================================================================================
+
+def create_tcp_ip_packet(target_ip:str, dst_port:int, src_port:int) -> Raw_Packet:
+    ip_header  = IP(target_ip)
+    tcp_header = TCP(src_port, dst_port, target_ip)
+    return Raw_Packet(ip_header + tcp_header)
+
+
+
+# LAYERS =====================================================================================================
 
 def ICMP() -> bytes:
     id     = os.getpid() & 0xFFFF
