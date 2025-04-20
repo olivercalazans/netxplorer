@@ -12,7 +12,7 @@ from sniffer       import Sniffer
 from net_info      import get_ports, get_host_name
 from pkt_sender    import send_layer_3_packet
 from pkt_builder   import TCP, IP
-from pkt_dissector import dissect_tcp_packet
+from pkt_dissector import Packet_Dissector
 from type_hints    import Raw_Packet
 
 
@@ -119,16 +119,17 @@ class Port_Scanner:
     def _display_result(self) -> None:
         self._display_header(self._data._target_ip)
         open_ports = 0
-        for packet in self._responses:
-            port, flags = dissect_tcp_packet(packet)
+        with Packet_Dissector() as dissector:
+            for packet in self._responses:
+                port, flags = dissector._dissect_tcp_packet(packet)
 
-            if flags != 'SYN-ACK' and self._data._arguments['show'] is False:
-                continue
+                if flags != 'SYN-ACK' and self._data._arguments['show'] is False:
+                    continue
 
-            if flags == 'SYN-ACK': open_ports += 1
-            status      = self.STATUS.get(flags)
-            description = self._data._ports[port]
-            print(f'Status: {status:>8} -> {port:>5} - {description}')
+                if flags == 'SYN-ACK': open_ports += 1
+                status      = self.STATUS.get(flags)
+                description = self._data._ports[port]
+                print(f'Status: {status:>8} -> {port:>5} - {description}')
         print(f'Open ports: {open_ports}/{len(self._data._ports)}')
 
     

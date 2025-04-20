@@ -26,10 +26,10 @@ class Data:
 
 
     @property
-    def target_ip(self):
+    def target_ip(self) -> str:
         return self._target_ip
 
     @target_ip.setter
-    def target_ip(self, value:str):
+    def target_ip(self, value:str) -> None:
         try:   self._target_ip = gethostbyname(value)
         except Exception: raise ValueError(f'Unknown host: {value}')

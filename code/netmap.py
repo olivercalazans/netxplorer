@@ -9,7 +9,7 @@ from sniffer       import Sniffer
 from pkt_builder   import ICMP
 from net_info      import get_ip_range, get_host_name
 from pkt_sender    import send_ping
-from pkt_dissector import dissect_icmp_packet
+from pkt_dissector import Packet_Dissector
 from type_hints    import Raw_Packet
 
 
@@ -68,8 +68,9 @@ class Network_Mapper:
     @staticmethod
     def _display_ping_result(packets:list[Raw_Packet]) -> None:
         print(f'IP Address{8*" "}MAC Address{9*" "}Hostname')
-        for pkt in packets:
-            src_ip, mac_addr = dissect_icmp_packet(pkt)
-            hostname         = get_host_name(src_ip)
-            print(f'{src_ip:<15} - {mac_addr} - {hostname}')
+        with Packet_Dissector() as dissector:
+            for pkt in packets:
+                src_ip, mac_addr = dissector._dissect_icmp_packet(pkt)
+                hostname         = get_host_name(src_ip)
+                print(f'{src_ip:<15} - {mac_addr} - {hostname}')
         print(f'Total: {len(packets)} active hosts')
