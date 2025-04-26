@@ -8,8 +8,8 @@ import socket
 import struct
 import random
 import os
-from net_info   import get_my_ip_address
-from type_hints import Raw_Packet
+from utils.network_info import get_my_ip_address
+from utils.type_hints   import Raw_Packet
 
 
 # BUILDERS ===================================================================================================

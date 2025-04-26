@@ -5,7 +5,7 @@
 
 
 import argparse
-from data_class import Data
+from models.data import Data
 
 
 class ArgParser_Manager:

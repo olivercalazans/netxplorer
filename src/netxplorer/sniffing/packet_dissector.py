@@ -6,7 +6,7 @@
 
 import struct
 import socket
-from type_hints import Raw_Packet
+from utils.type_hints import Raw_Packet
 
 
 class Packet_Dissector:

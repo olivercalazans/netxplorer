@@ -8,8 +8,8 @@ import socket
 import ctypes
 import threading
 import select
-from net_info   import get_default_iface
-from type_hints import BPF_Instruction, BPF_Configured_Socket
+from utils.network_info import get_default_iface
+from utils.type_hints   import BPF_Instruction, BPF_Configured_Socket
 
 
 class Sniffer:

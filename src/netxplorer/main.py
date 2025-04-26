@@ -5,11 +5,11 @@
 
 
 import sys
-from arg_parser import ArgParser_Manager
-from data_class import Data
-from port_scan  import Port_Scanner
-from bgrab      import Banner_Grabber
-from netmap     import Network_Mapper
+from config.arg_parser   import ArgParser_Manager
+from core.port_scanner   import Port_Scanner
+from core.banner_grabber import Banner_Grabber
+from core.network_mapper import Network_Mapper
+from models.data         import Data
 
 
 class Main:

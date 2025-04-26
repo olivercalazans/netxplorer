@@ -7,12 +7,12 @@
 import random
 import time
 import sys
-from data_class    import Data
-from sniffer       import Sniffer
-from net_info      import get_ports, get_host_name
-from pkt_sender    import send_layer_3_packet
-from pkt_builder   import create_tcp_ip_packet
-from pkt_dissector import Packet_Dissector
+from models.data               import Data
+from sniffing.sniffer          import Sniffer
+from sniffing.packet_sender    import send_layer_3_packet
+from sniffing.packet_builder   import create_tcp_ip_packet
+from sniffing.packet_dissector import Packet_Dissector
+from utils.network_info        import get_ports, get_host_name
 
 
 class Port_Scanner:

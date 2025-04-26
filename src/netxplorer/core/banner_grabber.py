@@ -6,7 +6,7 @@
 
 import socket
 import ssl
-from data_class import Data
+from models.data import Data
 
 
 class Banner_Grabber:

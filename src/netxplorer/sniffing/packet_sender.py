@@ -5,8 +5,7 @@
 
 
 import socket
-from type_hints import Raw_Packet
-
+from utils.type_hints import Raw_Packet
 
 def send_layer_3_packet(packet:Raw_Packet, target_ip:str, port:int) -> None:
     sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
