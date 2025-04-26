@@ -13,6 +13,7 @@ from sniffing.packet_sender    import send_layer_3_packet
 from sniffing.packet_builder   import create_tcp_ip_packet
 from sniffing.packet_dissector import Packet_Dissector
 from utils.network_info        import get_ports, get_host_name
+from utils.type_hints          import Raw_Packet
 
 
 class Port_Scanner:
@@ -67,7 +68,7 @@ class Port_Scanner:
         else:                              self._data._ports = get_ports('common')
         
         if self._data._arguments['random']:
-            random_list      = random.sample(list(self._data._ports.items()), len(self._data._ports))
+            random_list:list  = random.sample(list(self._data._ports.items()), len(self._data._ports))
             self._data._ports = dict(random_list)
 
 
@@ -82,18 +83,25 @@ class Port_Scanner:
 
 
     def _send_packets(self, src_ports:list[int]) -> None:
-        delay_list = self._get_delay_time_list()
-        index      = 1
-        for delay, src_port, dst_port in zip(delay_list, src_ports, self._data._ports):
-            packet = create_tcp_ip_packet(self._data._target_ip, dst_port, src_port)
-            send_layer_3_packet(packet, self._data._target_ip, dst_port)
+        delay_list:list = self._get_delay_time_list()
+        len_ports:int   = len(self._data._ports)
+        index:int       = 1
 
-            sys.stdout.write(f'\rPacket sent: {index}/{len(self._data._ports)} >> delay {delay:.2f}')
-            sys.stdout.flush()
-            
+        for delay, src_port, dst_port in zip(delay_list, src_ports, self._data._ports):
+            packet:Raw_Packet = create_tcp_ip_packet(self._data._target_ip, dst_port, src_port)
+            send_layer_3_packet(packet, self._data._target_ip, dst_port)
+            self._display_progress(index, len_ports, delay)
             time.sleep(delay)
             index += 1
+            
         sys.stdout.write('\n')
+
+    
+    
+    @staticmethod
+    def _display_progress(index:int, len_ports:int, delay:float) -> None:
+        sys.stdout.write(f'\rPacket sent: {index}/{len_ports} >> delay {delay:.2f}')
+        sys.stdout.flush()
 
 
 
@@ -109,7 +117,7 @@ class Port_Scanner:
 
 
     def _display_result(self) -> None:
-        self._display_header(self._data._target_ip)
+        print(f'>> IP: {self._data._target_ip} - Hostname: {get_host_name(self._data._target_ip)}')
         open_ports = 0
         with Packet_Dissector() as dissector:
             for packet in self._responses:
@@ -123,10 +131,3 @@ class Port_Scanner:
                 description = self._data._ports[port]
                 print(f'Status: {status:>8} -> {port:>5} - {description}')
         print(f'Open ports: {open_ports}/{len(self._data._ports)}')
-
-    
-
-    @staticmethod
-    def _display_header(ip:str) -> None:
-        hostname = get_host_name(ip)
-        print(f'IP: {ip} - Hostname: {hostname}')

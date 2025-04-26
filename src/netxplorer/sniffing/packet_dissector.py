@@ -35,10 +35,10 @@ class Packet_Dissector:
 
 
 
-    IP_HEADER_STRUCT  = struct.Struct('!BBHHHBBH4s4s')
-    SOURCE_IP_STRUCT  = struct.Struct('4s')
-    TCP_HEADER_STRUCT = struct.Struct('!HHLLBBHHH')
-    TCP_FLAG_MAP      = {
+    IP_HEADER_STRUCT:struct.Struct  = struct.Struct('!BBHHHBBH4s4s')
+    SOURCE_IP_STRUCT:struct.Struct  = struct.Struct('4s')
+    TCP_HEADER_STRUCT:struct.Struct = struct.Struct('!HHLLBBHHH')
+    TCP_FLAG_MAP:dict = {
             0b00010010: 'SYN-ACK', # (0b00000010 + 0b00010000)
             0b00000010: 'SYN',
             0b00010100: 'RST-ACK', # (0b00000100 + 0b00010000)
@@ -90,8 +90,8 @@ class Packet_Dissector:
     
 
     def _get_source_ip(self) -> str:
-        ip_header = self._get_ip_header()
-        raw_bytes = self.SOURCE_IP_STRUCT.unpack(ip_header[12:16])[0]
+        ip_header:tuple = self._get_ip_header()
+        raw_bytes:bytes = self.SOURCE_IP_STRUCT.unpack(ip_header[12:16])[0]
         return socket.inet_ntoa(raw_bytes)
     
 
@@ -101,12 +101,12 @@ class Packet_Dissector:
 
 
     def _calculate_tcp_header_length(self) -> tuple[int, int]:
-        ip_header = self._get_ip_header()
-        ihl:int   = (ip_header[0] & 0x0F) * 4
-        start:int = 14 + ihl
-        end:int   = start + 20
+        ip_header:memoryview = self._get_ip_header()
+        ihl:int              = (ip_header[0] & 0x0F) * 4
+        start:int            = 14 + ihl
+        end:int              = start + 20
         return start, end
     
 
-    def _get_tcp_flags(self, tcp_header) -> int:
+    def _get_tcp_flags(self, tcp_header:tuple) -> int:
         return self.TCP_FLAG_MAP.get(tcp_header[5] & (0b00111111), 'Filtered')

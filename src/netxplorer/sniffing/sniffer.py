@@ -75,18 +75,18 @@ class Sniffer:
 
 
     def _create_sniffer(self) -> BPF_Configured_Socket:
-        sniffer = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
+        sniffer:socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
         sniffer.bind((get_default_iface(), 0))
 
-        bpf_filter   = self._define_filter()
-        filter_array = (sock_filter * len(bpf_filter))()
+        bpf_filter:BPF_Instruction = self._define_filter()
+        filter_array:int           = (sock_filter * len(bpf_filter))()
         for i, (code, jt, jf, k) in enumerate(bpf_filter):
             filter_array[i] = sock_filter(code, jt, jf, k)
 
-        prog = sock_fprog(len(bpf_filter), filter_array)
+        prog:sock_fprog = sock_fprog(len(bpf_filter), filter_array)
 
-        SO_ATTACH_FILTER = 26
-        libc = ctypes.cdll.LoadLibrary("libc.so.6")
+        SO_ATTACH_FILTER:int = 26
+        libc:ctypes.CDLL     = ctypes.cdll.LoadLibrary("libc.so.6")
         libc.setsockopt(sniffer.fileno(), socket.SOL_SOCKET, SO_ATTACH_FILTER, ctypes.byref(prog), ctypes.sizeof(prog))
 
         self._sniffer = sniffer
@@ -110,9 +110,9 @@ class Sniffer:
 
 
     def _get_tcp_filter_parameters(self) -> BPF_Instruction:
-        port_jumps = self._create_port_jumps()
-        num        = len(port_jumps)
-        parameters = [
+        port_jumps:BPF_Instruction = self._create_port_jumps()
+        num:int         = len(port_jumps)
+        parameters:list = [
             (0x15, 0, num + 4, 2048), #...: Jump if EtherType != IPv4
             (0x30, 0, 0,       23), #.....: Load IP Protocol
             (0x15, 0, num + 2, 6), #......: Jump if Protocol != TCP
@@ -123,11 +123,11 @@ class Sniffer:
 
 
     def _create_port_jumps(self) -> BPF_Instruction:
-        len_ports       = len(self._ports)
-        port_parameters = list()
+        len_ports:int        = len(self._ports)
+        port_parameters:list = list()
         for i, port in enumerate(self._ports):
-            true_jump  = len_ports - (i+1)
-            false_jump = 0 if i + 1 < len_ports else 1 
+            true_jump:int  = len_ports - (i+1)
+            false_jump:int = 0 if i + 1 < len_ports else 1 
             port_parameters.append((0x15, true_jump, false_jump, port))
         return port_parameters
 
@@ -142,6 +142,8 @@ class Sniffer:
             (0x30, 0, 0, 20), #.....: Load ICMP header
             (0x15, 0, 1, 0), #......: Jump if != Echo Reply
         ]
+
+
 
 
 # Define a BPF filter structure

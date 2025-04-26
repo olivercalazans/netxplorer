@@ -15,8 +15,8 @@ from utils.type_hints   import Raw_Packet
 # BUILDERS ===================================================================================================
 
 def create_tcp_ip_packet(target_ip:str, dst_port:int, src_port:int) -> Raw_Packet:
-    ip_header  = IP(target_ip)
-    tcp_header = TCP(src_port, dst_port, target_ip)
+    ip_header:bytes  = IP(target_ip)
+    tcp_header:bytes = TCP(src_port, dst_port, target_ip)
     return Raw_Packet(ip_header + tcp_header)
 
 
@@ -24,17 +24,17 @@ def create_tcp_ip_packet(target_ip:str, dst_port:int, src_port:int) -> Raw_Packe
 # LAYERS =====================================================================================================
 
 def ICMP() -> bytes:
-    id     = os.getpid() & 0xFFFF
-    header = struct.pack("!BBHHH",
+    id:int       = os.getpid() & 0xFFFF
+    header:bytes = struct.pack("!BBHHH",
                          8, #.......: ICMP type
                          0, #.......: ICMP code
                          0, #.......: Checksum
                          id, #......: ID
                          1 #........: Sequence Number
                          )
-    payload = bytes((os.urandom(56)))
-    chksum  = checksum(header + payload)
-    header  = struct.pack("!BBHHH", 8, 0, chksum, id, 1)
+    payload:bytes = bytes((os.urandom(56)))
+    chksum:int    = checksum(header + payload)
+    header:bytes  = struct.pack("!BBHHH", 8, 0, chksum, id, 1)
     return header + payload
 
 
@@ -56,7 +56,7 @@ def IP(dst_ip:str) -> bytes:
 
 
 def TCP(src_port:str, dst_port:int, dst_ip:int) -> bytes:
-    tcp_header = struct.pack('!HHLLBBHHH',
+    tcp_header:bytes = struct.pack('!HHLLBBHHH',
                              src_port, #.............: Source port
                              dst_port, #.............: Destiny port
                              0, #....................: Sequence
@@ -67,8 +67,8 @@ def TCP(src_port:str, dst_port:int, dst_ip:int) -> bytes:
                              0, #....................: Checksum (will be calculated)
                              0 #.....................: Urgent pointer
                              )
-    pseudo_hdr   = pseudo_header(dst_ip, len(tcp_header))
-    tcp_checksum = checksum(pseudo_hdr + tcp_header)
+    pseudo_hdr:bytes = pseudo_header(dst_ip, len(tcp_header))
+    tcp_checksum:int = checksum(pseudo_hdr + tcp_header)
     return struct.pack('!HHLLBBHHH', src_port, dst_port, 0, 0, (5 << 4),
                        (True << 1), socket.htons(5840), tcp_checksum, 0)
 
@@ -89,9 +89,9 @@ def checksum(data:bytes) -> int:
     if len(data) % 2:
         data += b"\x00"  # Padding
 
-    total = 0
+    total:int = 0
     for i in range(0, len(data), 2):
         total += (data[i] << 8) + data[i+1]
     
-    total = (total & 0xFFFF) + (total >> 16)
+    total:int = (total & 0xFFFF) + (total >> 16)
     return ~total & 0xFFFF

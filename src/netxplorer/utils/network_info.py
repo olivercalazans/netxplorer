@@ -13,7 +13,13 @@ import ipaddress
 
 
 def get_default_iface() -> str:
-    result = subprocess.run("ip route | awk '/default/ {print $5}'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    result:subprocess.CompletedProcess[str] = subprocess.run(
+        "ip route | awk '/default/ {print $5}'",
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
     return result.stdout.strip()
 
 
@@ -39,9 +45,9 @@ def get_subnet_mask() -> str|None:
 
 
 
-def get_ip_range() -> ipaddress.IPv4Address:
-    ip_range = ipaddress.IPv4Network(f'{get_my_ip_address()}/{get_subnet_mask()}', strict=False)
-    ip_range = [str(ip) for ip in ip_range.hosts()]
+def get_ip_range() -> list[str]:
+    ip_range:ipaddress.IPv4Network = ipaddress.IPv4Network(f'{get_my_ip_address()}/{get_subnet_mask()}', strict=False)
+    ip_range:list[str]             = [str(ip) for ip in ip_range.hosts()]
     ip_range.remove(get_my_ip_address())
     return ip_range
 
@@ -49,7 +55,7 @@ def get_ip_range() -> ipaddress.IPv4Address:
 
 def get_host_name(ip:str) -> str:
     try:
-        hostname = socket.gethostbyaddr(ip)[0]
+        hostname:str = socket.gethostbyaddr(ip)[0]
         return hostname[:-4] if hostname[-4:] == '.lan' else hostname
     except: return 'Unknown'
 
@@ -65,9 +71,9 @@ def get_ports(port_type='all') -> dict:
 
 
 def get_specific_ports(string:str) -> dict:
-    ALL_PORTS = {**get_common_ports(), **get_uncommon_ports()}
-    parts     = re.split(r',', string)
-    result    = list()
+    ALL_PORTS:dict = {**get_common_ports(), **get_uncommon_ports()}
+    parts:list     = re.split(r',', string)
+    result:list    = list()
 
     for part in parts:
         if '-' in part:

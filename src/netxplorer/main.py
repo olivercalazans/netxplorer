@@ -55,7 +55,7 @@ class Main:
 
     def _verify_if_the_command_exists(self) -> None:
         if    self._data._command_name in self._commands:   self._validate_arguments()
-        elif  self._data._command_name in ('--help', '-h'): self._display_description()
+        elif  self._data._command_name in ('--help', '-h'): self._display_description(self._commands)
         else: print(f'Unknown command: {self._data._command_name}')
 
 
@@ -66,20 +66,20 @@ class Main:
 
 
     def _run_command(self) -> None:
-        strategy_class = self._commands.get(self._data._command_name)
+        strategy_class:type = self._commands.get(self._data._command_name)
         with strategy_class(self._data) as strategy:
             strategy._execute()
 
 
     @staticmethod
-    def _display_description() -> None:
-        print('Repository: https://github.com/olivercalazans/netexplorer\n'
-              'NetXplorer CLI is a tool for network exploration\n'
-              'Available commands:\n'
-              f'pscan....: Portscaning\n'
-              f'banner...: Banner Grabbing\n'
-              f'netmap...: Network Mapping\n'
-              )
+    def _display_description(commands:dict) -> None:
+        print('> Repository: https://github.com/olivercalazans/netexplorer\n'
+              '> NetXplorer CLI is a tool for network exploration\n'
+              'Available commands:')
+        for name, class_name in commands.items():
+            command:str   = class_name.__name__.replace('_', ' ')
+            separetor:str = (10 - len(name)) * '.'
+            print(f'{name}{separetor}: {command}')
 
 
 
