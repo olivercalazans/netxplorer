@@ -12,7 +12,7 @@ from sniffing.sniffer          import Sniffer
 from sniffing.packet_sender    import send_layer_3_packet
 from sniffing.packet_builder   import create_tcp_ip_packet
 from sniffing.packet_dissector import Packet_Dissector
-from utils.network_info        import get_ports, get_host_name
+from utils.network_info        import get_ports, get_host_name, get_random_ports
 from utils.type_hints          import Raw_Packet
 
 
@@ -39,8 +39,8 @@ class Port_Scanner:
     __slots__ = ('_data', '_responses')
 
     def __init__(self, data:Data) -> None:
-        self._data:Data      = data
-        self._responses:list = None
+        self._data:Data           = data
+        self._responses:list|dict = None
 
 
 
@@ -56,6 +56,7 @@ class Port_Scanner:
         try:
             self._prepare_target_ports()
             self._send_and_receive()
+            self._process_result()
             self._display_result()
         except KeyboardInterrupt:  print('Process stopped')
         except Exception as error: print(f'ERROR: {error}')
@@ -74,7 +75,7 @@ class Port_Scanner:
 
 
     def _send_and_receive(self) -> None:
-        src_ports = ports_to_sniff = [random.randint(10000, 65535) for _ in self._data._ports]
+        src_ports = ports_to_sniff = get_random_ports(len(self._data._ports))
         with Sniffer('TCP', ports_to_sniff) as sniffer:
             self._send_packets(src_ports)
             time.sleep(3)
@@ -116,16 +117,26 @@ class Port_Scanner:
 
 
 
+    def _process_result(self) -> None:
+        with Packet_Dissector() as dissector:
+            results:dict = {'TCP':[]}
+            for packet in self._responses:
+                info:dict    = dissector._process_packet(packet)
+                protocol:str = info['protocol']
+                port:int     = info['port']
+                flags:str    = info['flags']
+                results[protocol].append((port, flags))
+        self._responses = results
+
+
+
     def _display_result(self) -> None:
         print(f'>> IP: {self._data._target_ip} - Hostname: {get_host_name(self._data._target_ip)}')
         open_ports = 0
-        with Packet_Dissector() as dissector:
-            for packet in self._responses:
-                port, flags = dissector._dissect_tcp_packet(packet)
-
+        for protocol in self._responses:
+            for port, flags in self._responses[protocol]:
                 if flags != 'SYN-ACK' and self._data._arguments['show'] is False:
                     continue
-
                 if flags == 'SYN-ACK': open_ports += 1
                 status      = self.STATUS.get(flags)
                 description = self._data._ports[port]

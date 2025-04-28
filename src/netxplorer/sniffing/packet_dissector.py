@@ -48,6 +48,16 @@ class Packet_Dissector:
 
 
 
+    def _process_packet(self, raw_packet:Raw_Packet) -> None:
+        self.packet  = raw_packet
+        protocol:int = self._packet[14:34][9]
+
+        match protocol:
+            case 1: return self._dissect_icmp_packet()
+            case 6: return self._dissect_tcp_packet()
+
+
+
     @property
     def packet(self) -> Raw_Packet:
         return self._packet
@@ -58,24 +68,23 @@ class Packet_Dissector:
 
     
 
-    def _dissect_tcp_packet(self, packet:Raw_Packet) -> tuple[int, str]:
+    def _dissect_tcp_packet(self) -> dict:
         try:
-            self.packet      = packet
+            source_ip:str    = self._get_source_ip()
             tcp_header:tuple = self._get_tcp_header()
             source_port:int  = tcp_header[0]
             tcp_flags:str    = self._get_tcp_flags(tcp_header)
-            return (source_port, tcp_flags)
+            return {'ip':source_ip, 'port': source_port, 'flags': tcp_flags, 'protocol': 'TCP'}
         except (IndexError, struct.error, ValueError):
             return None
 
 
 
-    def _dissect_icmp_packet(self, packet:Raw_Packet) -> str:
+    def _dissect_icmp_packet(self) -> dict:
         try:
-            self.packet    = packet
             source_mac:str = self._get_source_mac_address()
             source_ip:str  = self._get_source_ip()
-            return source_ip, source_mac
+            return {'ip': source_ip, 'mac': source_mac, 'protocol': 'ICMP'}
         except (IndexError, struct.error, ValueError):
             return None
 

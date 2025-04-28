@@ -99,18 +99,19 @@ class Sniffer:
         filter += [(0x06, 0, 0, 0xFFFF), #...: Accept packet
                    (0x06, 0, 0, 0x0000)] #...: Discard packet
         return filter
-    
+
 
 
     def _get_parameters(self) -> list[tuple]:
         match self._protocol:
-            case 'TCP':  return self._get_tcp_filter_parameters()
-            case 'ICMP': return self._get_icmp_parameters()
+            case 'TCP':      return self._get_tcp_parameters()
+            case 'TCP-ICMP': return self._get_tcp_parameters()
+            case 'ICMP':     return self._get_icmp_parameters()
 
+    
 
-
-    def _get_tcp_filter_parameters(self) -> BPF_Instruction:
-        port_jumps:BPF_Instruction = self._create_port_jumps()
+    def _get_tcp_parameters(self) -> BPF_Instruction:
+        port_jumps:BPF_Instruction = self._create_jumps()
         num:int         = len(port_jumps)
         parameters:list = [
             (0x15, 0, num + 4, 2048), #...: Jump if EtherType != IPv4
@@ -120,16 +121,19 @@ class Sniffer:
         ]
         return parameters + port_jumps
 
+    
 
-
-    def _create_port_jumps(self) -> BPF_Instruction:
-        len_ports:int        = len(self._ports)
+    def _create_jumps(self) -> BPF_Instruction:
+        icmp_parameters:list = self._get_icmp_parameters()[-3:] if self._protocol == 'TCP-ICMP' else []
         port_parameters:list = list()
+        len_ports:int        = len(self._ports) + len(icmp_parameters)
+
         for i, port in enumerate(self._ports):
             true_jump:int  = len_ports - (i+1)
             false_jump:int = 0 if i + 1 < len_ports else 1 
             port_parameters.append((0x15, true_jump, false_jump, port))
-        return port_parameters
+        
+        return port_parameters + icmp_parameters
 
 
 
