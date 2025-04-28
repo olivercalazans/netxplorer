@@ -25,10 +25,11 @@ class Network_Mapper:
 
 
 
-    __slots__ = ('_responses')
+    __slots__ = ('_responses', '_results')
 
     def __init__(self, _) -> None:
-        self._responses:list|dict = None
+        self._responses:list = None
+        self._results:dict   = {}
     
 
 
@@ -83,21 +84,21 @@ class Network_Mapper:
         mac_address:str = pkt_info['mac'] if 'mac' in pkt_info else None
         protocol:str    = pkt_info['protocol'] if 'protocol' in pkt_info else None
 
-        if ip not in self._responses:
-            self._responses[ip] = {'mac': 'Unknown', 'protocols': []}
-        
+        if ip not in self._results:
+            self._results[ip] = {'mac': 'Unknown', 'protocols': []}
+
         if mac_address:
-            self._responses[ip]['mac'] = mac_address
+            self._results[ip]['mac'] = mac_address
         
         if protocol:
-            self._responses[ip]['protocols'].append(protocol)
+            self._results[ip]['protocols'].append(protocol)
 
 
 
     def _display_result(self) -> None:
-        print(f'IP Address{8*" "}MAC Address{9*" "}Protocols   Hostname')
-        for ip in self._responses:
-            protocols:str   = '-'.join(ip['protocols'])
-            mac_address:str = self._responses[ip]['mac']
-            print(f'{ip:<15} - {mac_address} - {protocols:<10} - {get_host_name(ip)}')
-        print(f'Total: {len(self._responses)} active hosts')
+        print(f'#IP Address{7*" "}#MAC Address{8*" "}#Protocols   Hostname')
+        for ip, info in self._results.items():
+            protocols:str   = '-'.join(info['protocols'])
+            mac_address:str = info['mac']
+            print(f'{ip:<18}{mac_address:<20}{protocols:<13}{get_host_name(ip)}')
+        print(f'Total: {len(self._results)} active hosts')
