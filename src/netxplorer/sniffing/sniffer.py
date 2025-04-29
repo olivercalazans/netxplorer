@@ -70,6 +70,7 @@ class Sniffer:
 
     def _get_packets(self) -> list[dict]:
         self._stop_sniffing()
+        print(len(self._responses))
         return self._responses
 
 
@@ -79,6 +80,9 @@ class Sniffer:
         sniffer.bind((get_default_iface(), 0))
 
         bpf_filter:BPF_Instruction = self._define_filter()
+        
+        for i in bpf_filter:print(i)
+
         filter_array:int           = (sock_filter * len(bpf_filter))()
         for i, (code, jt, jf, k) in enumerate(bpf_filter):
             filter_array[i] = sock_filter(code, jt, jf, k)
@@ -108,7 +112,24 @@ class Sniffer:
             case 'TCP-ICMP': return self._get_tcp_parameters()
             case 'ICMP':     return self._get_icmp_parameters()
 
-    
+
+
+    @staticmethod
+    def _create_parameter(type:str, true_jump:int, false_jump:int) -> tuple:
+        match type:
+            case 'Load EtherType':     (0x28, true_jump, false_jump, 12)
+            case 'Jump if IPv4':       (0x15, true_jump, false_jump, 2048)
+            case 'Load IPv4 header':   (0x30, true_jump, false_jump, 23)
+            case 'Jump if TCP':        (0x15, true_jump, false_jump, 6)
+            case 'Load DST port':      (0x28, true_jump, false_jump, 36)
+            case 'Jump if ICMP':       (0x15, true_jump, false_jump, 1)
+            case 'Load ICMP header':   (0x30, true_jump, false_jump, 20)
+            case 'Jump if Echo Reply': (0x15, true_jump, false_jump, 0)
+            case 'Accept Packet':      (0x06, true_jump, false_jump, 0xFFFF)
+            case 'Dsicard Packet':     (0x06, true_jump, false_jump, 0x0000)
+
+
+
 
     def _get_tcp_parameters(self) -> BPF_Instruction:
         port_jumps:BPF_Instruction = self._create_jumps()
@@ -116,7 +137,7 @@ class Sniffer:
         parameters:list = [
             (0x15, 0, num + 4, 2048), #...: Jump if EtherType != IPv4
             (0x30, 0, 0,       23), #.....: Load IP Protocol
-            (0x15, 0, num + 2, 6), #......: Jump if Protocol != TCP
+            (0x15, 0, num - 3, 6), #......: Jump if Protocol != TCP
             (0x28, 0, 0,       36) #......: Load Destination Port
         ]
         return parameters + port_jumps
@@ -153,10 +174,10 @@ class Sniffer:
 # Define a BPF filter structure
 class sock_filter(ctypes.Structure):
     _fields_ = [
-        ("code", ctypes.c_ushort),
-        ("jt", ctypes.c_ubyte),
-        ("jf", ctypes.c_ubyte),
-        ("k", ctypes.c_uint),
+        ("code", ctypes.c_ushort), #...: Operation Code
+        ("jt", ctypes.c_ubyte), #......: Jump if True
+        ("jf", ctypes.c_ubyte), #......: Jump if False
+        ("k", ctypes.c_uint), #........: Byte offset position
     ]
 
 
