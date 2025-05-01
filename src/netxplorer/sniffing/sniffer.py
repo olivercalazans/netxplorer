@@ -110,16 +110,18 @@ class Sniffer:
             case 'Load ICMP header':     return (0x30, true_jump, false_jump, 20)
             case 'Jump if Echo Reply':   return (0x15, true_jump, false_jump, 0)
             # Accept or Discard ============================================
-            case 'Accept Packet':        return (0x06, true_jump, false_jump, 0xFFFF)
-            case 'Discard Packet':       return (0x06, true_jump, false_jump, 0x0000)
+            case 'Accept packet':        return (0x06, true_jump, false_jump, 0xFFFF)
+            case 'Discard packet':       return (0x06, true_jump, false_jump, 0x0000)
 
 
 
     def _define_filter(self) -> BPF_Instruction:
-        filter  = [(0x28, 0, 0, 12)] #.......: Load EtherType (offset 12)
-        filter += self._get_parameters() #...: Specific parameters
-        filter += [(0x06, 0, 0, 0xFFFF), #...: Accept packet
-                   (0x06, 0, 0, 0x0000)] #...: Discard packet
+        filter:list = [self._create_parameter('Jump if EtherType', 0, 0)]
+        filter:list = filter + self._get_parameters()
+        filter:list = filter + [
+            self._create_parameter('Accept packet',  0, 0),
+            self._create_parameter('Discard packet', 0, 0)
+        ]
         return filter
 
 
