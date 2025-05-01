@@ -91,42 +91,44 @@ class Sniffer:
         libc.setsockopt(sniffer.fileno(), socket.SOL_SOCKET, SO_ATTACH_FILTER, ctypes.byref(prog), ctypes.sizeof(prog))
 
         self._sniffer = sniffer
+        
 
 
-    
+    BPF_MAP = {
+        'Jump if EtherType':    lambda jt, jf, d: (0x28, jt, jf, 12),
+        'Jump if IPv4':         lambda jt, jf, d: (0x15, jt, jf, 2048),
+        'Load IPv4 header':     lambda jt, jf, d: (0x30, jt, jf, 23),
+        'Jump if TCP':          lambda jt, jf, d: (0x15, jt, jf, 6),
+        'Load dst port':        lambda jt, jf, d: (0x28, jt, jf, 36),
+        'Jump if TCP dst port': lambda jt, jf, d: (0x15, jt, jf, d),
+        'Jump if ICMP':         lambda jt, jf, d: (0x15, jt, jf, 1),
+        'Load ICMP header':     lambda jt, jf, d: (0x30, jt, jf, 20),
+        'Jump if Echo Reply':   lambda jt, jf, d: (0x15, jt, jf, 0),
+        'Accept packet':        lambda jt, jf, d: (0x06, jt, jf, 0xFFFF),
+        'Discard packet':       lambda jt, jf, d: (0x06, jt, jf, 0x0000),
+    }
+
+
+
     @staticmethod
-    def _create_parameter(type:str, true_jump:int, false_jump:int, dst_port:int=None) -> BPF_Instruction:
-        match type:
-            case 'Jump if EtherType':    return (0x28, true_jump, false_jump, 12)
-            # IPv4 =========================================================
-            case 'Jump if IPv4':         return (0x15, true_jump, false_jump, 2048)
-            case 'Load IPv4 header':     return (0x30, true_jump, false_jump, 23)
-            # TCP ==========================================================
-            case 'Jump if TCP':          return (0x15, true_jump, false_jump, 6)
-            case 'Load dst port':        return (0x28, true_jump, false_jump, 36)
-            case 'Jump if TCP dst port': return (0x15, true_jump, false_jump, dst_port)
-            # ICMP =========================================================
-            case 'Jump if ICMP':         return (0x15, true_jump, false_jump, 1)
-            case 'Load ICMP header':     return (0x30, true_jump, false_jump, 20)
-            case 'Jump if Echo Reply':   return (0x15, true_jump, false_jump, 0)
-            # Accept or Discard ============================================
-            case 'Accept packet':        return (0x06, true_jump, false_jump, 0xFFFF)
-            case 'Discard packet':       return (0x06, true_jump, false_jump, 0x0000)
+    def _get_parameter(type:str, true_jump:int, false_jump:int, dst_port:int=None) -> BPF_Instruction:
+        parameter:tuple = Sniffer.BPF_MAP[type](true_jump, false_jump, dst_port)
+        return parameter
 
 
 
     def _define_filter(self) -> BPF_Instruction:
-        filter:list = [self._create_parameter('Jump if EtherType', 0, 0)]
-        filter:list = filter + self._get_parameters()
+        filter:list = [self._get_parameter('Jump if EtherType', 0, 0)]
+        filter:list = filter + self._get_protocol_parameters()
         filter:list = filter + [
-            self._create_parameter('Accept packet',  0, 0),
-            self._create_parameter('Discard packet', 0, 0)
+            self._get_parameter('Accept packet',  0, 0),
+            self._get_parameter('Discard packet', 0, 0)
         ]
         return filter
 
 
 
-    def _get_parameters(self) -> list[tuple]:
+    def _get_protocol_parameters(self) -> list[tuple]:
         match self._protocol:
             case 'TCP':      return self._get_tcp_parameters()
             case 'ICMP':     return self._get_icmp_parameters()
@@ -138,10 +140,10 @@ class Sniffer:
         port_jumps:BPF_Instruction = self._create_tcp_port_parameters(other_jumps)
         num:int         = len(port_jumps)
         parameters:list = [
-            self._create_parameter('Jump if IPv4',     0, num + 4 + other_jumps),
-            self._create_parameter('Load IPv4 header', 0, 0),
-            self._create_parameter('Jump if TCP',      0, num + 2),
-            self._create_parameter('Load dst port',    0, 0)
+            self._get_parameter('Jump if IPv4',     0, num + 4 + other_jumps),
+            self._get_parameter('Load IPv4 header', 0, 0),
+            self._get_parameter('Jump if TCP',      0, num + 2),
+            self._get_parameter('Load dst port',    0, 0)
         ]
         return parameters + port_jumps
 
@@ -149,11 +151,11 @@ class Sniffer:
 
     def _create_tcp_port_parameters(self, other_jumps:int) -> BPF_Instruction:
         port_parameters:list = [
-            self._create_parameter('Jump if TCP dst port', other_jumps, 1 + other_jumps, self._ports[0])
+            self._get_parameter('Jump if TCP dst port', other_jumps, 1 + other_jumps, self._ports[0])
         ]
         
         for i, port in enumerate(self._ports[1:], start=1):
-            new_parameter:tuple = self._create_parameter('Jump if TCP dst port', i + other_jumps, 0, port)
+            new_parameter:tuple = self._get_parameter('Jump if TCP dst port', i + other_jumps, 0, port)
             port_parameters.insert(0, new_parameter)
         
         return port_parameters
@@ -163,11 +165,11 @@ class Sniffer:
     @staticmethod
     def _get_icmp_parameters() -> BPF_Instruction:
         return [
-            Sniffer._create_parameter('Jump if IPv4',       0, 5),
-            Sniffer._create_parameter('Load IPv4 header',   0, 0),
-            Sniffer._create_parameter('Jump if ICMP',       0, 3),
-            Sniffer._create_parameter('Load ICMP header',   0, 0),
-            Sniffer._create_parameter('Jump if Echo Reply', 0, 1)
+            Sniffer._get_parameter('Jump if IPv4',       0, 5),
+            Sniffer._get_parameter('Load IPv4 header',   0, 0),
+            Sniffer._get_parameter('Jump if ICMP',       0, 3),
+            Sniffer._get_parameter('Load ICMP header',   0, 0),
+            Sniffer._get_parameter('Jump if Echo Reply', 0, 1)
         ]
     
 
