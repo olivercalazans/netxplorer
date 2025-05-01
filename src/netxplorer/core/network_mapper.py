@@ -98,7 +98,7 @@ class Network_Mapper:
     def _display_result(self) -> None:
         print(f'#IP Address{7*" "}#MAC Address{8*" "}#Protocols   Hostname')
         for ip, info in self._results.items():
-            protocols:str   = '-'.join(info['protocols'])
+            protocols:str   = '-'.join(sorted(info['protocols']))
             mac_address:str = info['mac']
             print(f'{ip:<18}{mac_address:<20}{protocols:<13}{get_host_name(ip)}')
         print(f'Total: {len(self._results)} active hosts')

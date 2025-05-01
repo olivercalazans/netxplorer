@@ -47,9 +47,10 @@ def get_subnet_mask() -> str|None:
 
 
 def get_ip_range() -> list[str]:
-    ip_range:ipaddress.IPv4Network = ipaddress.IPv4Network(f'{get_my_ip_address()}/{get_subnet_mask()}', strict=False)
+    my_ip_address:str              = get_my_ip_address()
+    ip_range:ipaddress.IPv4Network = ipaddress.IPv4Network(f'{my_ip_address}/{get_subnet_mask()}', strict=False)
     ip_range:list[str]             = [str(ip) for ip in ip_range.hosts()]
-    ip_range.remove(get_my_ip_address())
+    ip_range.remove(my_ip_address)
     return ip_range
 
 
