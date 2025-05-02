@@ -10,7 +10,7 @@ fi
 
 # Variables
 SOURCE_DIR=$(dirname "$(realpath "$0")")
-ROOT_DIR=${SOURCE_DIR%/*}
+ROOT_DIR=${SOURCE_DIR%/*/*}
 DESTINY_DIR="/opt/netxplorer"
 WRAPPER_FILE="xplorer"
 DIRECTORIES=("$DESTINY_DIR" "config" "core" "models" "sniffing" "utils")
