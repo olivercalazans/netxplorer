@@ -13,7 +13,7 @@ SOURCE_DIR=$(dirname "$(realpath "$0")")
 ROOT_DIR=${SOURCE_DIR%/*/*}
 DESTINY_DIR="/opt/netxplorer"
 WRAPPER_FILE="xplorer"
-DIRECTORIES=("$DESTINY_DIR" "config" "core" "models" "sniffing" "utils")
+DIRECTORIES=("config" "core" "models" "sniffing" "utils")
 FILES=(
     # CONFIG ===================
     "config/__init__.py"              
@@ -43,8 +43,7 @@ FILES=(
 
 
 
-
-# Verify if all required files exist and copy them to the destination directory
+# Verify if all required files exist
 FILES_NOT_FOUND=""
 for file in "${FILES[@]}"; do
     if [ ! -e "$SOURCE_DIR/$file" ]; then
@@ -54,26 +53,41 @@ done
 
 
 
-
-# If no files are missing, copy them to the destination
-if [ -z "$FILES_NOT_FOUND" ]; then
-    for dict in "${DIRECTORIES[@]}"; do
-        sudo mkdir -p "$dict"
-    done
-    for file in "${FILES[@]}"; do
-        cp "$SOURCE_DIR/$file" "$DESTINY_DIR"
-    done
-else
-    printf "\n[ ERROR ] File(s) not found: $FILES_NOT_FOUND\n"
+# Stop execution if any file is missing
+if [ -n "$FILES_NOT_FOUND" ]; then
+    echo "[ ERROR ] File(s) not found: $FILES_NOT_FOUND"
     exit 1
 fi
-printf "[  OK  ] Directory created ($DESTINY_DIR)\n"
 
+
+
+# Create directories
+sudo mkdir -p "$DESTINY_DIR"
+
+for dict in "${DIRECTORIES[@]}"; do
+    sudo mkdir -p "$DESTINY_DIR/$dict"
+done
+echo "[  OK  ] Directory created ($DESTINY_DIR)"
+
+
+
+# Copie files to destiny directory
+for file in "${FILES[@]}"; do
+    cp "$SOURCE_DIR/$file" "$DESTINY_DIR/$file"
+done
+
+
+
+# Copy the LICENSE file if it exists
+if [ -e "$ROOT_DIR/LICENSE" ]; then
+    cp "$ROOT_DIR/LICENSE" "$DESTINY_DIR" 2> /dev/null
+else
+    echo "[WARNING] LICENSE not found"
+fi
 
 
 
 # Create a wrapper script to execute the application
-printf "Creating wrapper script..."
 cat <<'EOF' > "/usr/bin/$WRAPPER_FILE"
 #!/bin/bash
 if [ "$EUID" -ne 0 ]; then
@@ -82,18 +96,13 @@ fi
 
 python3 /opt/netxplorer/main.py "$@"
 EOF
+echo "[  OK  ] Wrapper script created"
+
+
+
+# Protect files and directories
+sudo chmod -R 710 "$DESTINY_DIR"
 sudo chmod 710 "/usr/bin/$WRAPPER_FILE"
-printf "\r[  OK  ] Wrapper script created\n"
-
-
-
-# Copy the LICENSE file if it exists
-if [ -e "$ROOT_DIR/LICENSE" ]; then
-    cp "$ROOT_DIR/LICENSE" "$DESTINY_DIR" 2> /dev/null
-else
-    printf "[WARNING] LICENSE not found\n"
-fi
-
 
 
 # Display installation completion message
