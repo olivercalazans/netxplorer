@@ -121,11 +121,10 @@ class Port_Scanner:
         with Packet_Dissector() as dissector:
             results:dict = {'TCP':[]}
             for packet in self._responses:
-                info:dict    = dissector._process_packet(packet)
-                protocol:str = info['protocol']
-                port:int     = info['port']
-                flags:str    = info['flags']
+                pkt_info:dict            = dissector._process_packet(packet)
+                _, port, flags, protocol = pkt_info.values()
                 results[protocol].append((port, flags))
+
         self._responses = results
 
 
@@ -137,7 +136,10 @@ class Port_Scanner:
             for port, flags in self._responses[protocol]:
                 if flags != 'SYN-ACK' and self._data._arguments['show'] is False:
                     continue
-                if flags == 'SYN-ACK': open_ports += 1
+
+                if flags == 'SYN-ACK':
+                    open_ports += 1
+                
                 status      = self.STATUS.get(flags)
                 description = self._data._ports[port]
                 print(f'Status: {status:>8} -> {port:>5} - {description}')
