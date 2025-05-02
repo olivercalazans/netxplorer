@@ -22,7 +22,7 @@ The documentation includes:
 <br>
 
 ## Installation
-To make it easier to use this project, a bash script has been created to handle the entire installation. Simply run the [setup.sh](code/setup.sh) script, and everything will be set up for you. If you prefer to run the code manually, follow the steps in the [Wiki](https://github.com/olivercalazans/netxplorer/wiki/Installation).
+To make it easier to use this project, a bash script has been created to handle the entire installation. Simply run the [setup.sh](https://github.com/olivercalazans/netxplorer/blob/main/src/netxplorer/setup.sh) script, and everything will be set up for you. If you prefer to run the code manually, follow the steps in the [Wiki](https://github.com/olivercalazans/netxplorer/wiki/Installation).
 
 <br>
 
