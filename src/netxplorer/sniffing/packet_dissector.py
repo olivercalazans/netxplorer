@@ -48,7 +48,7 @@ class Packet_Dissector:
 
 
 
-    def _process_packet(self, raw_packet:Raw_Packet) -> None:
+    def process_packet(self, raw_packet:Raw_Packet) -> None:
         self.packet  = raw_packet
         protocol:int = self._packet[14:34][9]
 

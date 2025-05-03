@@ -19,17 +19,17 @@ class Data:
         return cls._instance
     
 
-    _command_name:str = None
-    _arguments:list   = None
-    _target_ip:str    = None 
-    _ports:dict|list  = None
+    command_name:str = None
+    arguments:list   = None
+    target_ip:str    = None 
+    ports:dict|list  = None
 
 
     @property
-    def target_ip(self) -> str:
-        return self._target_ip
+    def _target_ip(self) -> str:
+        return self.target_ip
 
-    @target_ip.setter
-    def target_ip(self, value:str) -> None:
-        try:   self._target_ip = gethostbyname(value)
+    @_target_ip.setter
+    def _target_ip(self, value:str) -> None:
+        try:   self.target_ip = gethostbyname(value)
         except Exception: raise ValueError(f'Unknown host: {value}')

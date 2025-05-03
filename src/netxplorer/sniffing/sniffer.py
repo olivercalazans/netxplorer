@@ -68,7 +68,7 @@ class Sniffer:
 
 
 
-    def _get_packets(self) -> list[dict]:
+    def get_packets(self) -> list[dict]:
         self._stop_sniffing()
         return self._responses
 

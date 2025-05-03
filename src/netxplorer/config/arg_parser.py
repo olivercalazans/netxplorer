@@ -31,7 +31,7 @@ class ArgParser_Manager:
 
 
     def __enter__(self):
-        command_arg_manager = self._definitions.get(self._data._command_name)
+        command_arg_manager = self._definitions.get(self._data.command_name)
         command_arg_manager()
         return self
 
@@ -48,10 +48,10 @@ class ArgParser_Manager:
         self._parser.add_argument('-p', '--ports', type=str, help='Specify ports to scan')
         self._parser.add_argument('-a', '--all', action='store_true', help='Scan all ports')
         self._parser.add_argument('-d', '--delay', nargs='?', const=True, default=False, help='Add a delay between packet transmissions')
-        self._parser = self._parser.parse_args(self._data._arguments)
+        self._parser = self._parser.parse_args(self._data.arguments)
 
-        self._data.target_ip  = self._parser.host
-        self._data._arguments = {
+        self._data._target_ip  = self._parser.host
+        self._data.arguments = {
             'show':   self._parser.show,
             'ports':  self._parser.ports,
             'all':    self._parser.all,
@@ -66,8 +66,8 @@ class ArgParser_Manager:
         self._parser.add_argument('host', type=str, help='Target IP/Hostname')
         self._parser.add_argument('protocol', type=str, choices=PROTOCOLS, help='Protocol')
         self._parser.add_argument('-p', '--port', type=str, help='Specify a port to grab the banners')
-        self._parser = self._parser.parse_args(self._data._arguments)
+        self._parser = self._parser.parse_args(self._data.arguments)
 
-        self._data.target_ip  = self._parser.host
-        self._data._ports     = self._parser.port
-        self._data._arguments = {'protocol': self._parser.protocol}
+        self._data._target_ip  = self._parser.host
+        self._data.ports     = self._parser.port
+        self._data.arguments = {'protocol': self._parser.protocol}

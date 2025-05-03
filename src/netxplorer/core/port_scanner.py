@@ -52,7 +52,7 @@ class Port_Scanner:
 
 
 
-    def _execute(self) -> None:
+    def execute(self) -> None:
         try:
             self._prepare_target_ports()
             self._send_and_receive()
@@ -64,33 +64,33 @@ class Port_Scanner:
 
 
     def _prepare_target_ports(self) -> None:
-        if self._data._arguments['ports']: self._data._ports = get_ports(self._data._arguments['ports'])
-        elif self._data._arguments['all']: self._data._ports = get_ports()
-        else:                              self._data._ports = get_ports('common')
+        if self._data.arguments['ports']: self._data.ports = get_ports(self._data.arguments['ports'])
+        elif self._data.arguments['all']: self._data.ports = get_ports()
+        else:                              self._data.ports = get_ports('common')
         
-        if self._data._arguments['random']:
-            random_list:list  = random.sample(list(self._data._ports.items()), len(self._data._ports))
-            self._data._ports = dict(random_list)
+        if self._data.arguments['random']:
+            random_list:list  = random.sample(list(self._data.ports.items()), len(self._data.ports))
+            self._data.ports = dict(random_list)
 
 
 
     def _send_and_receive(self) -> None:
-        src_ports = ports_to_sniff = get_random_ports(len(self._data._ports))
+        src_ports = ports_to_sniff = get_random_ports(len(self._data.ports))
         with Sniffer('TCP', ports_to_sniff) as sniffer:
             self._send_packets(src_ports)
             time.sleep(3)
-            self._responses = sniffer._get_packets()
+            self._responses = sniffer.get_packets()
 
 
 
     def _send_packets(self, src_ports:list[int]) -> None:
         delay_list:list = self._get_delay_time_list()
-        len_ports:int   = len(self._data._ports)
+        len_ports:int   = len(self._data.ports)
         index:int       = 1
 
-        for delay, src_port, dst_port in zip(delay_list, src_ports, self._data._ports):
-            packet:Raw_Packet = create_tcp_ip_packet(self._data._target_ip, dst_port, src_port)
-            send_layer_3_packet(packet, self._data._target_ip, dst_port)
+        for delay, src_port, dst_port in zip(delay_list, src_ports, self._data.ports):
+            packet:Raw_Packet = create_tcp_ip_packet(self._data.target_ip, dst_port, src_port)
+            send_layer_3_packet(packet, self._data.target_ip, dst_port)
             self._display_progress(index, len_ports, delay)
             time.sleep(delay)
             index += 1
@@ -107,13 +107,13 @@ class Port_Scanner:
 
 
     def _get_delay_time_list(self) -> list[int]:
-        if   self._data._arguments['delay'] is False: return [0.0 for _ in range(len(self._data._ports))]
-        elif self._data._arguments['delay'] is True:  return [random.uniform(0.5, 2) for _ in range(len(self._data._ports))]
+        if   self._data.arguments['delay'] is False: return [0.0 for _ in range(len(self._data.ports))]
+        elif self._data.arguments['delay'] is True:  return [random.uniform(0.5, 2) for _ in range(len(self._data.ports))]
 
-        values = [float(value) for value in self._data._arguments['delay'].split('-')]
+        values = [float(value) for value in self._data.arguments['delay'].split('-')]
         if len(values) > 1:
-            return [random.uniform(values[0], values[1]) for _ in range(len(self._data._ports))]
-        return [values[0] for _ in range(len(self._data._ports))]
+            return [random.uniform(values[0], values[1]) for _ in range(len(self._data.ports))]
+        return [values[0] for _ in range(len(self._data.ports))]
 
 
 
@@ -121,7 +121,7 @@ class Port_Scanner:
         with Packet_Dissector() as dissector:
             results:dict = {'TCP':[]}
             for packet in self._responses:
-                pkt_info:dict            = dissector._process_packet(packet)
+                pkt_info:dict            = dissector.process_packet(packet)
                 _, port, flags, protocol = pkt_info.values()
                 results[protocol].append((port, flags))
 
@@ -130,17 +130,17 @@ class Port_Scanner:
 
 
     def _display_result(self) -> None:
-        print(f'>> IP: {self._data._target_ip} - Hostname: {get_host_name(self._data._target_ip)}')
+        print(f'>> IP: {self._data.target_ip} - Hostname: {get_host_name(self._data.target_ip)}')
         open_ports = 0
         for protocol in self._responses:
             for port, flags in self._responses[protocol]:
-                if flags != 'SYN-ACK' and self._data._arguments['show'] is False:
+                if flags != 'SYN-ACK' and self._data.arguments['show'] is False:
                     continue
 
                 if flags == 'SYN-ACK':
                     open_ports += 1
                 
                 status      = self.STATUS.get(flags)
-                description = self._data._ports[port]
+                description = self._data.ports[port]
                 print(f'Status: {status:>8} -> {port:>5} - {description}')
-        print(f'Open ports: {open_ports}/{len(self._data._ports)}')
+        print(f'Open ports: {open_ports}/{len(self._data.ports)}')

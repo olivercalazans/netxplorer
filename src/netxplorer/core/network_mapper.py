@@ -41,7 +41,7 @@ class Network_Mapper:
 
 
 
-    def _execute(self) -> None:
+    def execute(self) -> None:
         try:
             self._perform_mapping()
             self._process_responses()
@@ -56,7 +56,7 @@ class Network_Mapper:
         with Sniffer('TCP-ICMP', source_ports) as sniffer:
             self._send_packets(source_ports)
             time.sleep(3)
-            self._responses = sniffer._get_packets()
+            self._responses = sniffer.get_packets()
     
 
 
@@ -74,7 +74,7 @@ class Network_Mapper:
     def _process_responses(self) -> None:
         with Packet_Dissector() as dissector:
             for packet in self._responses:
-                pkt_info:dict = dissector._process_packet(packet)
+                pkt_info:dict = dissector.process_packet(packet)
                 self._update_data(pkt_info)
 
     

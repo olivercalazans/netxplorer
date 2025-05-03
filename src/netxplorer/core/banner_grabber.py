@@ -35,7 +35,7 @@ class Banner_Grabber:
 
 
 
-    def _execute(self) -> None:
+    def execute(self) -> None:
         try:   self._grab_banners_on_the_protocol()
         except KeyboardInterrupt:               print('Process stopped')
         except ConnectionRefusedError as error: print(f'Connection refused: {error}')
@@ -46,9 +46,9 @@ class Banner_Grabber:
 
 
     def _grab_banners_on_the_protocol(self) -> None:
-        protocol = self._protocol_dictionary().get(self._data._arguments['protocol'])
-        port     = self._data._ports if self._data._ports else protocol['port']
-        protocol['func'](self._data._target_ip, port)
+        protocol = self._protocol_dictionary().get(self._data.arguments['protocol'])
+        port     = self._data.ports if self._data.ports else protocol['port']
+        protocol['func'](self._data.target_ip, port)
 
 
 
