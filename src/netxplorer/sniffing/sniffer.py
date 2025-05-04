@@ -70,6 +70,7 @@ class Sniffer:
 
     def get_packets(self) -> list[dict]:
         self._stop_sniffing()
+        print(len(self._responses))
         return self._responses
 
 
@@ -79,6 +80,8 @@ class Sniffer:
         sniffer.bind((get_default_iface(), 0))
 
         bpf_filter:BPF_Instruction = self._define_filter()
+        
+        for i in bpf_filter:print(i)
 
         filter_array:int           = (sock_filter * len(bpf_filter))()
         for i, (code, jt, jf, k) in enumerate(bpf_filter):

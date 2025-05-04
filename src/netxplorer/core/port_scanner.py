@@ -7,14 +7,14 @@
 import random
 import time
 import sys
-from models.data               import Data
-from sniffing.sniffer          import Sniffer
-from netxplorer.pkt_build.packet_sender    import send_layer_3_packet
-from netxplorer.pkt_build.udp   import create_tcp_ip_packet
-from netxplorer.sniffing.dissector import Packet_Dissector
-from utils.network_info        import get_host_name, get_random_ports
-from utils.port_set            import Port_Set
-from utils.type_hints          import Raw_Packet
+from models.data             import Data
+from sniffing.sniffer        import Sniffer
+from pkt_build.packet_sender import send_layer_3_packet
+from pkt_build.tcp           import TCP
+from netxplorer.dissector.dissector      import Packet_Dissector
+from utils.network_info      import get_host_name, get_random_ports
+from utils.port_set          import Port_Set
+from utils.type_hints        import Raw_Packet
 
 
 class Port_Scanner:
@@ -65,9 +65,9 @@ class Port_Scanner:
 
 
     def _prepare_target_ports(self) -> None:
-        if self._data.arguments['ports']: self._data.ports = get_ports(self._data.arguments['ports'])
-        elif self._data.arguments['all']: self._data.ports = get_ports()
-        else:                              self._data.ports = get_ports('common')
+        if self._data.arguments['ports']: self._data.ports = Port_Set.get_ports(self._data.arguments['ports'])
+        elif self._data.arguments['all']: self._data.ports = Port_Set.get_ports()
+        else:                             self._data.ports = Port_Set.get_ports('common')
         
         if self._data.arguments['random']:
             random_list:list  = random.sample(list(self._data.ports.items()), len(self._data.ports))
@@ -90,7 +90,7 @@ class Port_Scanner:
         index:int       = 1
 
         for delay, src_port, dst_port in zip(delay_list, src_ports, self._data.ports):
-            packet:Raw_Packet = create_tcp_ip_packet(self._data.target_ip, dst_port, src_port)
+            packet:Raw_Packet = TCP.get_tcp_ip_packet(self._data.target_ip, dst_port, src_port)
             send_layer_3_packet(packet, self._data.target_ip, dst_port)
             self._display_progress(index, len_ports, delay)
             time.sleep(delay)
@@ -123,7 +123,7 @@ class Port_Scanner:
             results:dict = {'TCP':[]}
             for packet in self._responses:
                 pkt_info:dict            = dissector.process_packet(packet)
-                _, port, flags, protocol = pkt_info.values()
+                ip, port, flags, protocol = pkt_info.values()
                 results[protocol].append((port, flags))
 
         self._responses = results

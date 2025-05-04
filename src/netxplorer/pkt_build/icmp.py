@@ -23,7 +23,7 @@ class ICMP:
     @classmethod
     def get_packet(cls) -> bytes:
             id:int        = os.getpid() & 0xFFFF
-            fields:list   = list(cls._ICMP_STRUCT)
+            fields:list   = list(cls._BASE_ICMP_FIELDS)
             fields[-2]    = id
             header:bytes  = cls._ICMP_STRUCT.pack(*fields)
             

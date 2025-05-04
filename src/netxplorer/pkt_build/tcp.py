@@ -27,7 +27,7 @@ class TCP:
 
 
     @classmethod
-    def get_tcp_ip_packet(cls, src_port:str, dst_port:int, dst_ip:int) -> bytes:
+    def get_tcp_ip_packet(cls, dst_ip:int, src_port:str, dst_port:int) -> bytes:
         ip_header:bytes  = IP.get_ip_header(dst_ip)
         
         fields:list      = list(cls._BASE_TCP_FIELDS)
