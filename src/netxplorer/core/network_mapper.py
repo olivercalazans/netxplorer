@@ -6,10 +6,10 @@
 
 import time
 import random
-from sniffing.sniffer          import Sniffer
-from sniffing.packet_builder   import ICMP, create_tcp_ip_packet
-from sniffing.packet_sender    import send_ping, send_layer_3_packet
-from sniffing.packet_dissector import Packet_Dissector
+from sniffing.sniffer                            import Sniffer
+from netxplorer.pkt_build.udp   import ICMP, create_tcp_ip_packet
+from netxplorer.pkt_build.packet_sender    import send_ping, send_layer_3_packet
+from netxplorer.sniffing.dissector import Packet_Dissector
 from utils.network_info        import get_ip_range, get_host_name, get_random_ports
 from utils.type_hints          import Raw_Packet
 
