@@ -25,6 +25,13 @@ class BPF_Filter:
 
 
     @staticmethod
+    def get_filter(protocol:str, ports:list=None) -> BPF_Instruction:
+        match protocol:
+            case 'TCP':  return BPF_Filter._get_tcp_parameters(ports)
+            case 'ICMP': return BPF_Filter._get_icmp_parameters()
+
+
+    @staticmethod
     def _get_parameter(type:str, true_jump:int, false_jump:int, dst_port:int=None) -> BPF_Instruction:
         return BPF_Filter.BPF_MAP[type](true_jump, false_jump, dst_port)
 
@@ -34,7 +41,7 @@ class BPF_Filter:
     # TCP ====================================================================================================
 
     @staticmethod
-    def get_tcp_parameters(ports:list) -> BPF_Instruction:
+    def _get_tcp_parameters(ports:list) -> BPF_Instruction:
         num:int = len(ports)
         return [
             BPF_Filter._get_parameter('Jump if EtherType', 0, 0),
@@ -68,7 +75,7 @@ class BPF_Filter:
     # ICMP ===================================================================================================
 
     @staticmethod
-    def get_icmp_parameters() -> BPF_Instruction:
+    def _get_icmp_parameters() -> BPF_Instruction:
         return [
             BPF_Filter._get_parameter('Jump if EtherType',  0, 0),
             BPF_Filter._get_parameter('Jump if IPv4',       0, 5),
