@@ -31,6 +31,7 @@ class Banner_Grabber:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        self.__class__._instance = None
         return False
 
 

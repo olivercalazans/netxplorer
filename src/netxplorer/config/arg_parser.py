@@ -37,6 +37,7 @@ class ArgParser_Manager:
 
 
     def __exit__(self, exc_type, exc_value, traceback):
+        self.__class__._instance = None
         return False
     
 
