@@ -6,7 +6,7 @@
 
 import socket
 from struct                  import Struct
-from pkt_build.ip            import IP
+from netxplorer.pkt_build.header_ip            import IP
 from pkt_build.layer_4_utils import Layer_4_Utils
 
 
@@ -23,7 +23,7 @@ class UDP:
 
     @classmethod
     def get_udp_ip_packet(cls, dst_ip:str, src_port:int, dst_port) -> bytes:
-        ip_header:bytes  = IP.get_ip_header(dst_ip)
+        ip_header:bytes  = IP.create_ip_header(dst_ip)
 
         fileds:list      = list(cls._UDP_BASE_FIELDS)
         fileds[0:2]      = [src_port, dst_port]

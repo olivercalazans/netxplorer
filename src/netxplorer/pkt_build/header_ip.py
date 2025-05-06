@@ -16,7 +16,7 @@ class IP:
     _MY_IP:str        = socket.inet_aton(get_my_ip_address())
 
     @classmethod
-    def get_ip_header(cls, dst_ip:str) -> bytes:
+    def create_ip_header(cls, dst_ip:str) -> bytes:
         return cls._IP_STRUCT.pack(
             (4 << 4) + 5, #..............: IP version and IHL (Internet Header Length)
             0, #.........................: TOS (Type of Service)

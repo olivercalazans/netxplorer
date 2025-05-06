@@ -6,7 +6,6 @@
 
 import socket
 from struct                  import Struct
-from pkt_build.ip            import IP
 from pkt_build.layer_4_utils import Layer_4_Utils
 
 
@@ -27,9 +26,7 @@ class TCP:
 
 
     @classmethod
-    def get_tcp_ip_packet(cls, dst_ip:int, src_port:str, dst_port:int) -> bytes:
-        ip_header:bytes  = IP.get_ip_header(dst_ip)
-        
+    def create_tcp_header(cls, dst_ip:int, src_port:str, dst_port:int) -> bytes:
         fields:list      = list(cls._BASE_TCP_FIELDS)
         fields[0:2]      = [src_port, dst_port]
         tcp_header:bytes = cls._TCP_STRUCT.pack(*fields)
@@ -40,4 +37,4 @@ class TCP:
         fields[-2]       = checksum
         tcp_header:bytes = cls._TCP_STRUCT.pack(*fields)
 
-        return (ip_header + tcp_header)
+        return tcp_header

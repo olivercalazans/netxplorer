@@ -6,8 +6,8 @@
 
 import time
 import random
-from pkt_build.icmp          import ICMP
-from pkt_build.tcp           import TCP
+from netxplorer.pkt_build.header_icmp          import ICMP
+from netxplorer.pkt_build.header_tcp           import TCP
 from pkt_build.packet_sender import send_ping, send_layer_3_packet
 from sniffing.sniffer        import Sniffer
 from dissector.dissector     import Packet_Dissector
@@ -64,11 +64,11 @@ class Network_Mapper:
 
     @staticmethod
     def _send_packets(source_ports:list) -> None:
-        icmp_packet:Raw_Packet = ICMP().get_packet()
+        icmp_packet:Raw_Packet = ICMP().create_icmp_header()
         tcp:TCP                = TCP()
         for ip in get_ip_range():
             random_src_port:int   = random.choice(source_ports)
-            tcp_packet:Raw_Packet = tcp.get_tcp_ip_packet(ip, 80, random_src_port)
+            tcp_packet:Raw_Packet = tcp.create_tcp_header(ip, 80, random_src_port)
             send_ping(icmp_packet, ip)
             send_layer_3_packet(tcp_packet, ip, 80)
 

@@ -10,7 +10,7 @@ import sys
 from models.data             import Data
 from sniffing.sniffer        import Sniffer
 from pkt_build.packet_sender import send_layer_3_packet
-from pkt_build.tcp           import TCP
+from netxplorer.pkt_build.header_tcp           import TCP
 from dissector.dissector     import Packet_Dissector
 from utils.network_info      import get_host_name, get_random_ports
 from utils.port_set          import Port_Set
@@ -91,7 +91,7 @@ class Port_Scanner:
         index:int       = 1
 
         for delay, src_port, dst_port in zip(delay_list, src_ports, self._data.ports):
-            packet:Raw_Packet = TCP.get_tcp_ip_packet(self._data.target_ip, dst_port, src_port)
+            packet:Raw_Packet = TCP.create_tcp_header(self._data.target_ip, dst_port, src_port)
             send_layer_3_packet(packet, self._data.target_ip, dst_port)
             self._display_progress(index, len_ports, delay)
             time.sleep(delay)
