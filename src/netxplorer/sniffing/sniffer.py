@@ -7,7 +7,7 @@
 import socket
 import ctypes
 import select
-from threading import Thread, Lock
+from threading           import Thread, Lock
 from sniffing.bpf_filter import BPF_Filter
 from utils.network_info  import get_default_iface
 from utils.type_hints    import BPF_Instruction, BPF_Configured_Socket
@@ -24,7 +24,7 @@ class Sniffer:
 
     
 
-    __slots__ = ('_protocols', '_running', '_sniffers', '_lock', 'ports', '_responses')
+    __slots__ = ('_protocols', '_running', '_sniffers', '_lock', '_ports', '_responses')
 
     def __init__(self, protocols:str, tcp_ports:list=None, udp_ports=None) -> None:
         self._protocols:list = protocols.split('-')

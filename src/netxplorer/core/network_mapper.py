@@ -6,13 +6,12 @@
 
 import time
 import random
-from netxplorer.pkt_build.header_icmp          import ICMP
-from netxplorer.pkt_build.header_tcp           import TCP
-from pkt_build.packet_sender import send_ping, send_layer_3_packet
-from sniffing.sniffer        import Sniffer
-from dissector.dissector     import Packet_Dissector
-from utils.network_info      import get_ip_range, get_host_name, get_random_ports
-from utils.type_hints        import Raw_Packet
+from dissector.dissector      import Packet_Dissector
+from pkt_build.packet_builder import Packet_Builder
+from pkt_build.packet_sender  import send_ping, send_layer_3_packet
+from sniffing.sniffer         import Sniffer
+from utils.network_info       import get_ip_range, get_host_name, get_random_ports
+from utils.type_hints         import Raw_Packet
 
 
 class Network_Mapper:
@@ -55,7 +54,7 @@ class Network_Mapper:
 
     def _perform_mapping(self) -> None:
         source_ports:list = get_random_ports(5)
-        with Sniffer('TCP-ICMP', source_ports) as sniffer:
+        with Sniffer('TCP-ICMP', tcp_ports=source_ports) as sniffer:
             self._send_packets(source_ports)
             time.sleep(3)
             self._responses = sniffer.get_packets()
@@ -64,11 +63,10 @@ class Network_Mapper:
 
     @staticmethod
     def _send_packets(source_ports:list) -> None:
-        icmp_packet:Raw_Packet = ICMP().create_icmp_header()
-        tcp:TCP                = TCP()
+        icmp_packet:Raw_Packet = Packet_Builder().get_icmp_packet()
         for ip in get_ip_range():
             random_src_port:int   = random.choice(source_ports)
-            tcp_packet:Raw_Packet = tcp.create_tcp_header(ip, 80, random_src_port)
+            tcp_packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(ip, 80, random_src_port)
             send_ping(icmp_packet, ip)
             send_layer_3_packet(tcp_packet, ip, 80)
 

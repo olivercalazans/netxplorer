@@ -6,7 +6,6 @@
 
 import socket
 from struct                  import Struct
-from netxplorer.pkt_build.header_ip            import IP
 from pkt_build.layer_4_utils import Layer_4_Utils
 
 
@@ -22,9 +21,7 @@ class UDP:
 
 
     @classmethod
-    def get_udp_ip_packet(cls, dst_ip:str, src_port:int, dst_port) -> bytes:
-        ip_header:bytes  = IP.create_ip_header(dst_ip)
-
+    def create_udp_header(cls, dst_ip:str, src_port:int, dst_port) -> bytes:
         fileds:list      = list(cls._UDP_BASE_FIELDS)
         fileds[0:2]      = [src_port, dst_port]
         udp_header:bytes = cls._UDP_STRUCT.pack(*fileds)
@@ -35,4 +32,4 @@ class UDP:
         fileds[-1]       = checksum
         udp_header:bytes = cls._UDP_STRUCT.pack(*fileds)
         
-        return ip_header + udp_header
+        return udp_header

@@ -14,7 +14,7 @@ class IP_Dissector:
 
 
     @staticmethod
-    def get_ip_header(cls, packet:memoryview) -> memoryview:
+    def get_ip_header(packet:memoryview) -> memoryview:
         return packet[14:34]
     
 

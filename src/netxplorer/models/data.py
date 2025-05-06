@@ -24,7 +24,7 @@ class Data:
     command_name:str = None
     arguments:list   = None
     _target_ip:str   = None 
-    _ports:dict|list = None
+    _ports:dict      = None
 
 
 
@@ -44,5 +44,7 @@ class Data:
         return self._ports
     
     @ports.setter
-    def ports(self, ports_str:str) -> None:
-        self._ports = Port_Set().get_ports(ports_str)
+    def ports(self, input_ports:str) -> None:
+        match input_ports:
+            case str():  self._ports = Port_Set().get_ports(input_ports)
+            case dict(): self._ports = input_ports

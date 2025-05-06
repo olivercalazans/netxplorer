@@ -5,9 +5,9 @@
 
 
 import struct
-from ip_dissector     import IP_Dissector
-from tcp_dissector    import TCP_Dissector
-from utils.type_hints import Raw_Packet
+from dissector.ip_dissector  import IP_Dissector
+from dissector.tcp_dissector import TCP_Dissector
+from utils.type_hints        import Raw_Packet
 
 
 class Packet_Dissector(IP_Dissector, TCP_Dissector):
