@@ -14,61 +14,47 @@ from models.data         import Data
 
 class Main:
 
-    _instance = None
-    
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = object().__new__(cls)
-        return cls._instance
-
-
-    __slots__ = ('_data', '_commands')
-
-    def __init__(self) -> None:
-        self._data:Data     = Data()
-        self._commands:dict = {
+    _data:Data     = Data()
+    _commands:dict = {
         'pscan':  Port_Scanner,
         'banner': Banner_Grabber,
         'netmap': Network_Mapper
     }
-
-    
-    def __enter__(self):
-        self._get_data_from_system()
-        return self
-    
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.__class__._instance = None
-        return False
     
 
-    def _get_data_from_system(self) -> None:
-        self._data.command_name = sys.argv[1]
-        self._data.arguments    = sys.argv[2:] if len(sys.argv) > 2 else list()
-
-
-    def _handle_user(self) -> None:
-        try:   self._verify_if_the_command_exists()
+    @classmethod
+    def execute(cls) -> None:
+        try:   cls._get_data_from_system()
         except KeyboardInterrupt:  sys.exit()
         except IndexError:         print('Missing command name')
         except Exception as error: print(f'ERROR: {error}')
+
+
+    @classmethod
+    def _get_data_from_system(cls) -> None:
+        cls._data.command_name = sys.argv[1]
+        cls._data.arguments    = sys.argv[2:] if len(sys.argv) > 2 else list()
+        cls._verify_if_the_command_exists()
     
 
-    def _verify_if_the_command_exists(self) -> None:
-        if    self._data.command_name in self._commands:   self._validate_arguments()
-        elif  self._data.command_name in ('--help', '-h'): self._display_description(self._commands)
-        else: print(f'Unknown command: {self._data.command_name}')
+    @classmethod
+    def _verify_if_the_command_exists(cls) -> None:
+        if    cls._data.command_name in cls._commands:   cls._validate_arguments()
+        elif  cls._data.command_name in ('--help', '-h'): cls._display_description(cls._commands)
+        else: print(f'Unknown command: {cls._data.command_name}')
 
 
-    def _validate_arguments(self) -> None:
-        if self._data.command_name!= 'netmap':
-            with ArgParser_Manager(self._data): ...
-        self._run_command()
+    @classmethod
+    def _validate_arguments(cls) -> None:
+        if cls._data.command_name!= 'netmap':
+            with ArgParser_Manager(cls._data): ...
+        cls._run_command()
 
 
-    def _run_command(self) -> None:
-        strategy_class:type = self._commands.get(self._data.command_name)
-        with strategy_class(self._data) as strategy:
+    @classmethod
+    def _run_command(cls) -> None:
+        strategy_class:type = cls._commands.get(cls._data.command_name)
+        with strategy_class(cls._data) as strategy:
             strategy.execute()
 
 
@@ -84,6 +70,6 @@ class Main:
 
 
 
+
 if __name__ == '__main__':
-    with Main() as xplorer:
-        xplorer._handle_user()
+    Main().execute()

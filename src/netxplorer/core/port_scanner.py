@@ -11,7 +11,7 @@ from models.data             import Data
 from sniffing.sniffer        import Sniffer
 from pkt_build.packet_sender import send_layer_3_packet
 from pkt_build.tcp           import TCP
-from netxplorer.dissector.dissector      import Packet_Dissector
+from dissector.dissector     import Packet_Dissector
 from utils.network_info      import get_host_name, get_random_ports
 from utils.port_set          import Port_Set
 from utils.type_hints        import Raw_Packet
@@ -124,7 +124,7 @@ class Port_Scanner:
             results:dict = {'TCP':[]}
             for packet in self._responses:
                 pkt_info:dict            = dissector.process_packet(packet)
-                ip, port, flags, protocol = pkt_info.values()
+                _, port, flags, protocol = pkt_info.values()
                 results[protocol].append((port, flags))
 
         self._responses = results

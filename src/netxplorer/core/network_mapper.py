@@ -10,7 +10,7 @@ from pkt_build.icmp          import ICMP
 from pkt_build.tcp           import TCP
 from pkt_build.packet_sender import send_ping, send_layer_3_packet
 from sniffing.sniffer        import Sniffer
-from netxplorer.dissector.dissector      import Packet_Dissector
+from dissector.dissector     import Packet_Dissector
 from utils.network_info      import get_ip_range, get_host_name, get_random_ports
 from utils.type_hints        import Raw_Packet
 
