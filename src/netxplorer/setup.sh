@@ -23,18 +23,31 @@ FILES=(
     "core/banner_grabber.py"
     "core/network_mapper.py"
     "core/port_scanner.py"
+    # DISSECTOR =================
+    "dissector/__init__.py"
+    "dissector/dissector.py"
+    "dissector/ip_dissector.py"
+    "dissector/tcp_dissector.py"
     # MODEL =====================
     "models/__init__.py"
     "models/data.py"
+    # PACKET BUILD ==============
+    "pkt_build/__init__.py"
+    "pkt_build/header_icmp.py"
+    "pkt_build/header_ip.py"
+    "pkt_build/header_tcp.py"
+    "pkt_build/header_udp.py"
+    "pkt_build/layer_4_utils.py"
+    "pkt_build/packet_builder.py"
+    "pkt_build/packet_sender.py"
     # SNIFFING ==================
     "sniffing/__init__.py"
-    "sniffing/packet_builder.py"
-    "sniffing/packet_dissector.py"
-    "sniffing/packet_sender.py"
+    "sniffing/bpf_filter.py"
     "sniffing/sniffer.py"
     # UTILS =====================
     "utils/__init__.py"
     "utils/network_info.py"
+    "utils/port_set.py"
     "utils/type_hints.py"
     # ROOT ======================
     "__init__.py"
