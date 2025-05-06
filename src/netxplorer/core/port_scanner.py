@@ -141,8 +141,7 @@ class Port_Scanner:
 
                 if flags == 'SYN-ACK':
                     open_ports += 1
-                
                 status      = self.STATUS.get(flags)
-                description = self._data.ports[port]
-                print(f'Status: {status:>8} -> {port:>5} - {description}')
+                description = self._data.ports.get(port, 'Unknown port')
+                print(f'Status: {status:>11} -> {port:>5} - {description}')
         print(f'Open ports: {open_ports}/{len(self._data.ports)}')
