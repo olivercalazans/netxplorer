@@ -5,11 +5,12 @@
 
 
 import struct
-import socket
+from ip_dissector     import IP_Dissector
+from tcp_dissector    import TCP_Dissector
 from utils.type_hints import Raw_Packet
 
 
-class Packet_Dissector:
+class Packet_Dissector(IP_Dissector, TCP_Dissector):
 
     _instance = None
     
@@ -20,10 +21,11 @@ class Packet_Dissector:
 
 
 
-    __slots__ = ('_packet')
+    __slots__ = ('_packet', '_ip_header')
 
     def __init__(self) -> None:
-        self._packet:Raw_Packet = None
+        self._packet:memoryview    = None
+        self._ip_header:memoryview = None
 
 
 
@@ -36,45 +38,24 @@ class Packet_Dissector:
 
 
 
-    IP_HEADER_STRUCT:struct.Struct  = struct.Struct('!BBHHHBBH4s4s')
-    SOURCE_IP_STRUCT:struct.Struct  = struct.Struct('4s')
-    TCP_HEADER_STRUCT:struct.Struct = struct.Struct('!HHLLBBHHH')
-    TCP_FLAG_MAP:dict = {
-            0b00010010: 'SYN-ACK', # (0b00000010 + 0b00010000)
-            0b00000010: 'SYN',
-            0b00010100: 'RST-ACK', # (0b00000100 + 0b00010000)
-            0b00000100: 'RST',
-            0b00000001: 'FIN'
-        }
-
-
-
     def process_packet(self, raw_packet:Raw_Packet) -> None:
-        self.packet  = raw_packet
-        protocol:int = self._packet[14:34][9]
+        self._packet    = memoryview(raw_packet)
+        self._ip_header = super().get_ip_header(self._packet)
+        protocol:int    = super().get_protocol(self._ip_header)
 
         match protocol:
             case 1: return self._dissect_icmp_packet()
             case 6: return self._dissect_tcp_packet()
-
-
-
-    @property
-    def packet(self) -> Raw_Packet:
-        return self._packet
-    
-    @packet.setter
-    def packet(self, packet:Raw_Packet) -> None:
-        self._packet = memoryview(packet)
+            case _: return None
 
     
 
     def _dissect_tcp_packet(self) -> dict:
         try:
-            source_ip:str    = self._get_source_ip()
-            tcp_header:tuple = self._get_tcp_header()
-            source_port:int  = tcp_header[0]
-            tcp_flags:str    = self._get_tcp_flags(tcp_header)
+            source_ip:str    = super().get_source_ip(self._ip_header)
+            tcp_header:tuple = super().get_tcp_header(self._packet, self._ip_header)
+            source_port:int  = super().get_tcp_source_port(tcp_header)
+            tcp_flags:str    = super().get_tcp_flags(tcp_header)
             return {'ip':source_ip, 'port': source_port, 'flags': tcp_flags, 'protocol': 'TCP'}
         except (IndexError, struct.error, ValueError):
             return None
@@ -83,40 +64,14 @@ class Packet_Dissector:
 
     def _dissect_icmp_packet(self) -> dict:
         try:
-            source_mac:str = self._get_source_mac_address()
-            source_ip:str  = self._get_source_ip()
+            source_mac:str = self._get_source_mac_address(self._packet)
+            source_ip:str  = super().get_source_ip(self._ip_header)
             return {'ip': source_ip, 'mac': source_mac, 'protocol': 'ICMP'}
         except (IndexError, struct.error, ValueError):
             return None
 
 
 
-    def _get_source_mac_address(self) -> str:
-        return ":".join("%02x" % b for b in self._packet[6:12])
-
-
-    def _get_ip_header(self) -> memoryview:
-        return self._packet[14:34]
-    
-
-    def _get_source_ip(self) -> str:
-        ip_header:tuple = self._get_ip_header()
-        raw_bytes:bytes = self.SOURCE_IP_STRUCT.unpack(ip_header[12:16])[0]
-        return socket.inet_ntoa(raw_bytes)
-    
-
-    def _get_tcp_header(self) -> tuple[int, bytes]:
-        start, end = self._calculate_tcp_header_length()
-        return self.TCP_HEADER_STRUCT.unpack(self._packet[start:end])
-
-
-    def _calculate_tcp_header_length(self) -> tuple[int, int]:
-        ip_header:memoryview = self._get_ip_header()
-        ihl:int              = (ip_header[0] & 0x0F) * 4
-        start:int            = 14 + ihl
-        end:int              = start + 20
-        return start, end
-    
-
-    def _get_tcp_flags(self, tcp_header:tuple) -> int:
-        return self.TCP_FLAG_MAP.get(tcp_header[5] & (0b00111111), 'Filtered')
+    @staticmethod
+    def _get_source_mac_address(packet:memoryview) -> str:
+        return ":".join("%02x" % b for b in packet[6:12])
