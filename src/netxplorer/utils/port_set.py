@@ -10,17 +10,17 @@ import re
 class Port_Set:
 
     @staticmethod
-    def get_ports(port_type='all') -> dict:
-        match port_type:
+    def get_ports(port_str='all') -> dict:
+        match port_str:
             case 'common':   return Port_Set._COMMON_TCP_PORTS
             case 'uncommon': return Port_Set._COMMON_TCP_PORTS
             case 'all':      return Port_Set._mix_tcp_ports()
-            case _:          return Port_Set._get_specific_ports(port_type)
+            case _:          return Port_Set._get_specific_ports(port_str)
 
 
-    @staticmethod
-    def _mix_tcp_ports() -> dict:
-        return {**Port_Set._COMMON_TCP_PORTS, **Port_Set._UNCOMMON_TCP_PORTS}
+    @classmethod
+    def _mix_tcp_ports(cls) -> dict:
+        return {**cls._COMMON_TCP_PORTS, **cls._UNCOMMON_TCP_PORTS}
 
 
     @staticmethod
