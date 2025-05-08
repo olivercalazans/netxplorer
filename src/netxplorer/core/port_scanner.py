@@ -13,7 +13,6 @@ from pkt_build.packet_sender  import send_layer_3_packet
 from pkt_build.packet_builder import Packet_Builder
 from dissector.dissector      import Packet_Dissector
 from utils.network_info       import get_host_name, get_random_ports
-from utils.port_set           import Port_Set
 from utils.type_hints         import Raw_Packet
 
 
@@ -29,13 +28,10 @@ class Port_Scanner:
 
 
     STATUS = {
-        'SYN-ACK':  'OPENED',
-        'SYN':      'Potentially',
-        'RST-ACK':  'Closed',
-        'FIN':      'Connection Closed',
-        'RST':      'Reset',
-        'Filtered': 'Filtered'
+        'SYN-ACK': 'OPENED',
+        'SYN':     'Potentially',
     }
+
 
     __slots__ = ('_data', '_responses')
 
@@ -119,15 +115,26 @@ class Port_Scanner:
 
 
     def _process_result(self) -> None:
+        results:dict = {'TCP':[]}        
         with Packet_Dissector() as dissector:
-            results:dict = {'TCP':[]}
             for protocol in self._responses:
                 for packet in self._responses[protocol]:
                     pkt_info:dict            = dissector.process_packet(packet)
                     _, port, flags, protocol = pkt_info.values()
-                    results[protocol].append((port, flags))
+                    
+                    if flags not in self.STATUS: continue
+
+                    status, description = self._get_descriptions(port, flags)
+                    results[protocol].append((status, port, description, flags))
 
         self._responses = results
+
+    
+
+    def _get_descriptions(self, port:int, flags:str) -> tuple[str, str]:
+        description = self._data.ports.get(port, 'Unknown port')
+        status      = self.STATUS.get(flags)
+        return status, description
 
 
 
@@ -135,13 +142,9 @@ class Port_Scanner:
         print(f'>> IP: {self._data.target_ip} - Hostname: {get_host_name(self._data.target_ip)}')
         open_ports = 0
         for protocol in self._responses:
-            for port, flags in self._responses[protocol]:
-                if flags != 'SYN-ACK' and self._data.arguments['show'] is False:
-                    continue
-
+            for status, port, description, flags in self._responses[protocol]:
                 if flags == 'SYN-ACK':
                     open_ports += 1
-                status      = self.STATUS.get(flags)
-                description = self._data.ports.get(port, 'Unknown port')
+
                 print(f'Status: {status:>11} -> {port:>5} - {description}')
         print(f'Open ports: {open_ports}/{len(self._data.ports)}')

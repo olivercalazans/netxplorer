@@ -44,7 +44,6 @@ class ArgParser_Manager:
 
     def _validate_and_get_pscan_arguments(self) -> dict:
         self._parser.add_argument('host', type=str, help='Target IP/Hostname')
-        self._parser.add_argument('-s', '--show', action='store_true', help='Display all statuses, both open and closed')
         self._parser.add_argument('-r', '--random', action='store_true', help='Use the ports in random order')
         self._parser.add_argument('-p', '--ports', type=str, help='Specify ports to scan')
         self._parser.add_argument('-a', '--all', action='store_true', help='Scan all ports')
@@ -53,7 +52,6 @@ class ArgParser_Manager:
 
         self._data.target_ip = self._parser.host
         self._data.arguments = {
-            'show':   self._parser.show,
             'ports':  self._parser.ports,
             'all':    self._parser.all,
             'random': self._parser.random,
