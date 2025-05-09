@@ -49,7 +49,7 @@ class BPF_Filter:
             BPF_Filter._get_parameter('Load IPv4 header',  0, 0),
             BPF_Filter._get_parameter('Jump if TCP',       0, num + 2),
             BPF_Filter._get_parameter('Load dst port',     0, 0),
-            *BPF_Filter._create_tcp_port_parameters(ports),
+           *BPF_Filter._create_tcp_port_parameters(ports),
             BPF_Filter._get_parameter('Accept packet',     0, 0),
             BPF_Filter._get_parameter('Discard packet',    0, 0)
         ]

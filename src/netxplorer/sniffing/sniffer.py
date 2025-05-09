@@ -49,17 +49,17 @@ class Sniffer:
 
     def _start_sniffers(self) -> None:
         for protocol in self._protocols:
-            sniffer:Thread = Thread(target=self._sniff, args=(protocol,))
-            sniffer.start()
-            self._sniffers.append(sniffer)
+            ports:list                    = self._ports[protocol] if protocol != 'ICMP' else None
+            sniffer:BPF_Configured_Socket = self._create_sniffer(protocol, ports)
+            
+            sniffer_thread:Thread = Thread(target=self._sniff, args=(sniffer, protocol,))
+            sniffer_thread.start()
+            self._sniffers.append(sniffer_thread)
 
 
 
-    def _sniff(self, protocol:str) -> None:
-        ports:list                    = self._ports[protocol] if protocol != 'ICMP' else None
-        sniffer:BPF_Configured_Socket = self._create_sniffer(protocol, ports)
-        packets:list                  = []
-        
+    def _sniff(self, sniffer:BPF_Configured_Socket, protocol:str) -> None:
+        packets:list = []
         while self._running is True:
             readable, _, _= select.select([sniffer], [], [], 0.001)
             if readable:
@@ -86,7 +86,7 @@ class Sniffer:
 
     @staticmethod
     def _create_sniffer(protocol:str, ports:list=None) -> BPF_Configured_Socket:
-        sniffer:socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
+        sniffer:socket.socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
         sniffer.bind((get_default_iface(), 0))
 
         bpf_filter:BPF_Instruction = BPF_Filter.get_filter(protocol, ports)
