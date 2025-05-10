@@ -117,7 +117,7 @@ class Port_Scanner:
     def _display_result(self) -> None:
         print(f'>> IP: {self._data.target_ip} - Hostname: {get_host_name(self._data.target_ip)}')
         open_ports = 0
-        for _, _, port, status in self._data.responses['TCP']:
+        for _, port, status in self._data.responses['TCP']:
             description:str = Port_Set.get_tcp_port_description(port)
 
             if status == 'OPENED':

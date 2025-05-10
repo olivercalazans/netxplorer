@@ -65,7 +65,7 @@ class Packet_Dissector(IP_Dissector, TCP_Dissector):
 
             if flag_status is None: return None, None
 
-            return 'TCP', (source_ip, 'TCP', source_port, flag_status)
+            return 'TCP', (source_ip, source_port, flag_status)
         except (IndexError, struct.error, ValueError):
             return None, None
 
@@ -75,7 +75,7 @@ class Packet_Dissector(IP_Dissector, TCP_Dissector):
         try:
             source_mac:str = self._get_source_mac_address(self._packet)
             source_ip:str  = super().get_source_ip(self._ip_header)
-            return 'ICMP', (source_mac, source_ip, 'ICMP')
+            return 'ICMP', (source_mac, source_ip)
         except (IndexError, struct.error, ValueError):
             return None, None
 

@@ -27,12 +27,11 @@ class Network_Mapper:
 
 
 
-    __slots__ = ('_responses', '_results')
+    __slots__ = ('_data', '_results')
 
     def __init__(self, data:Data) -> None:
-        self._data:Data      = data
-        self._responses:list = None
-        self._results:dict   = {}
+        self._data:Data    = data
+        self._results:dict = {}
     
 
 
@@ -47,20 +46,25 @@ class Network_Mapper:
 
     def execute(self) -> None:
         try:
+            self._prepare_ports()
             self._perform_mapping()
+            self._process_packets()
             self._process_responses()
             self._display_result()
         except KeyboardInterrupt:  print('Process stopped')
         except Exception as error: print(f'ERROR: {error}')
 
 
+    def _prepare_ports(self) -> None:
+        self._data.my_ports = Port_Set.get_random_ports(5)
+
+
 
     def _perform_mapping(self) -> None:
-        self._data.my_ports = Port_Set.get_random_ports(5)
-        with Sniffer('TCP-ICMP') as sniffer:
+        with Sniffer(self._data, 'TCP-ICMP') as sniffer:
             self._send_packets()
             time.sleep(3)
-            self._responses = sniffer.get_packets()
+            sniffer.stop_sniffing()
     
 
 
@@ -74,35 +78,44 @@ class Network_Mapper:
 
 
 
-    def _process_responses(self) -> None:
-        with Packet_Dissector() as dissector:
-            for protocol in self._responses:
-                for packet in self._responses[protocol]:
-                    pkt_info:dict = dissector.dissect_packets(packet)
-                    self._update_data(pkt_info)
+    def _process_packets(self) -> None:
+        with Packet_Dissector(self._data) as dissector:
+            dissector.dissect_packets()
 
     
 
-    def _update_data(self, pkt_info:dict) -> None:
-        ip:str          = pkt_info['ip']
-        mac_address:str = pkt_info['mac'] if 'mac' in pkt_info else None
-        protocol:str    = pkt_info['protocol']
-
-        if ip not in self._results:
-            self._results[ip] = {'mac': 'Unknown', 'protocols': []}
-
-        if mac_address:
-            self._results[ip]['mac'] = mac_address
+    def _process_responses(self) -> None:
+        if self._data.responses['ICMP']:
+            self._process_icmp_reponses()
         
-        if protocol:
-            self._results[ip]['protocols'].append(protocol)
+        if self._data.responses['TCP']:
+            self._process_tcp_responses()
+
+    
+    def _process_icmp_reponses(self) -> None:
+        while self._data.responses['ICMP']:
+            mac_addr, ip      = self._data.responses['ICMP'].pop()
+            self._results[ip] = {'mac': mac_addr, 'protocols': ['ICMP']}
+
+
+    
+    def _process_tcp_responses(self) -> None:
+        while self._data.responses['TCP']:
+            ip, _, _ = self._data.responses['TCP'].pop()
+
+            if ip not in self._results:
+                self._results[ip] = {'mac': 'Unknown', 'protocols': ['TCP']}
+                continue
+
+            self._results[ip]['protocols'].append('TCP')
 
 
 
     def _display_result(self) -> None:
-        print(f'#IP Address{7*" "}#MAC Address{8*" "}#Protocols   Hostname')
+        print(f'IP Address{7*" "}MAC Address{8*" "}Protocols  Hostname')
+        print(f'{"-" * 15}  {"-" * 17}  {"-" * 9}  {"-" * 8}')
         for ip, info in self._results.items():
             protocols:str   = '-'.join(sorted(info['protocols']))
             mac_address:str = info['mac']
-            print(f'{ip:<18}{mac_address:<20}{protocols:<13}{get_host_name(ip)}')
+            print(f'{ip:<16} {mac_address:<18} {protocols:<11}{get_host_name(ip)}')
         print(f'Total: {len(self._results)} active hosts')
