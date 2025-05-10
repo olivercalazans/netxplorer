@@ -5,6 +5,7 @@
 
 
 import struct
+import sys
 from dissector.ip_dissector  import IP_Dissector
 from dissector.tcp_dissector import TCP_Dissector
 from models.data             import Data
@@ -40,10 +41,16 @@ class Packet_Dissector(IP_Dissector, TCP_Dissector):
 
 
     def dissect_packets(self) -> None:
+        len_packets:int       = len(self._data.raw_packets)
+        dissected_packets:int = 0
+        
         while self._data.raw_packets:
-            self._packet      = memoryview(self._data.raw_packets.pop())
-            self._ip_header   = super().get_ip_header(self._packet)
-            protocol_byte:int = super().get_protocol(self._ip_header)
+            dissected_packets += 1
+            self._display_progress(dissected_packets, len_packets)
+
+            self._packet       = memoryview(self._data.raw_packets.pop())
+            self._ip_header    = super().get_ip_header(self._packet)
+            protocol_byte:int  = super().get_protocol(self._ip_header)
 
             match protocol_byte:
                 case 1: protocol, packet_info = self._dissect_icmp_packet()
@@ -53,8 +60,16 @@ class Packet_Dissector(IP_Dissector, TCP_Dissector):
             if protocol is None: continue
 
             self._data.responses[protocol].insert(0, packet_info)
+        sys.stdout.write('\n')
 
     
+
+    @staticmethod
+    def _display_progress(index:int, len_ports:int) -> None:
+        sys.stdout.write(f'\rDissected packets: {index}/{len_ports}')
+        sys.stdout.flush()
+
+
 
     def _dissect_tcp_packet(self) -> tuple[str, tuple] | None:
         try:
