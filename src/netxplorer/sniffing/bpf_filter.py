@@ -4,85 +4,76 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-from utils.type_hints import BPF_Instruction
+import struct
+import socket
+from utils.network_info import get_my_ip_address
+from utils.type_hints   import BPF_Instruction
 
 
 class BPF_Filter:
 
-    BPF_MAP = {
-        'Jump if EtherType':    lambda jt, jf, d: (0x28, jt, jf, 12),
-        'Jump if IPv4':         lambda jt, jf, d: (0x15, jt, jf, 2048),
-        'Load IPv4 header':     lambda jt, jf, d: (0x30, jt, jf, 23),
-        'Jump if TCP':          lambda jt, jf, d: (0x15, jt, jf, 6),
-        'Load dst port':        lambda jt, jf, d: (0x28, jt, jf, 36),
-        'Jump if TCP dst port': lambda jt, jf, d: (0x15, jt, jf, d),
-        'Jump if ICMP':         lambda jt, jf, d: (0x15, jt, jf, 1),
-        'Load ICMP header':     lambda jt, jf, d: (0x30, jt, jf, 20),
-        'Jump if Echo Reply':   lambda jt, jf, d: (0x15, jt, jf, 0),
-        'Accept packet':        lambda jt, jf, d: (0x06, jt, jf, 0xFFFF),
-        'Discard packet':       lambda jt, jf, d: (0x06, jt, jf, 0x0000),
-    }
-
-
     @staticmethod
-    def get_filter(protocol:str, ports:list=None) -> BPF_Instruction:
+    def get_filter(protocol:str) -> BPF_Instruction:
         match protocol:
-            case 'TCP':  return BPF_Filter._get_tcp_parameters(ports)
-            case 'ICMP': return BPF_Filter._get_icmp_parameters()
+            case 'TCP':      return BPF_Filter._get_tcp_parameters()
+            case 'ICMP':     return BPF_Filter._get_icmp_parameters()
+            case 'TCP-ICMP': return BPF_Filter._get_tcp_icmp_parameters()
+
 
 
     @staticmethod
-    def _get_parameter(type:str, true_jump:int, false_jump:int, dst_port:int=None) -> BPF_Instruction:
-        return BPF_Filter.BPF_MAP[type](true_jump, false_jump, dst_port)
-
-
-
-
-    # TCP ====================================================================================================
-
-    @staticmethod
-    def _get_tcp_parameters(ports:list) -> BPF_Instruction:
-        num:int = len(ports)
+    def _get_tcp_parameters() -> BPF_Instruction:
+        my_ip_hex:int = struct.unpack('!I', socket.inet_aton(get_my_ip_address()))[0]
         return [
-            BPF_Filter._get_parameter('Jump if EtherType', 0, 0),
-            BPF_Filter._get_parameter('Jump if IPv4',      0, num + 4),
-            BPF_Filter._get_parameter('Load IPv4 header',  0, 0),
-            BPF_Filter._get_parameter('Jump if TCP',       0, num + 2),
-            BPF_Filter._get_parameter('Load dst port',     0, 0),
-           *BPF_Filter._create_tcp_port_parameters(ports),
-            BPF_Filter._get_parameter('Accept packet',     0, 0),
-            BPF_Filter._get_parameter('Discard packet',    0, 0)
+            (0x28, 0, 0, 0x0000000c),  # Load EtherType (offset 12)
+            (0x15, 0, 5, 0x00000800),  # If != IPv4, jump to reject
+            (0x20, 0, 0, 0x0000001e),  # Load IP dst address (offset 30)
+            (0x15, 0, 3, my_ip_hex),   # If dst IP != My IP, jump to reject
+            (0x30, 0, 0, 0x00000017),  # Load IP protocol (offset 23)
+            (0x15, 0, 1, 0x00000006),  # If protocol != TCP, jump to reject
+            (0x06, 0, 0, 0x00040000),  # Accept packet (capture 262144 bytes)
+            (0x06, 0, 0, 0x00000000),  # Reject packet
         ]
 
 
-    @staticmethod
-    def _create_tcp_port_parameters(ports:list) -> BPF_Instruction:
-        port_parameters:list = [
-            BPF_Filter._get_parameter('Jump if TCP dst port', 0, 1, ports[0])
-        ]
-        
-        if len(ports) == 1:
-            return port_parameters
-
-        for i, port in enumerate(ports[1:], start=1):
-            new_parameter:tuple = BPF_Filter._get_parameter('Jump if TCP dst port', i , 0, port)
-            port_parameters.insert(0, new_parameter)
-        
-        return port_parameters
-
-
-
-    # ICMP ===================================================================================================
 
     @staticmethod
     def _get_icmp_parameters() -> BPF_Instruction:
+        my_ip_hex:int = struct.unpack('!I', socket.inet_aton(get_my_ip_address()))[0]
         return [
-            BPF_Filter._get_parameter('Jump if EtherType',  0, 0),
-            BPF_Filter._get_parameter('Jump if IPv4',       0, 5),
-            BPF_Filter._get_parameter('Load IPv4 header',   0, 0),
-            BPF_Filter._get_parameter('Jump if ICMP',       0, 3),
-            BPF_Filter._get_parameter('Load ICMP header',   0, 0),
-            BPF_Filter._get_parameter('Jump if Echo Reply', 0, 1),
-            BPF_Filter._get_parameter('Accept packet',      0, 0),
-            BPF_Filter._get_parameter('Discard packet',     0, 0)
+            (0x28, 0, 0, 0x0000000c),  # Load EtherType (offset 12)
+            (0x15, 0,10, 0x00000800),  # If != IPv4, jump to reject
+            (0x20, 0, 0, 0x0000001e),  # Load IP dst address (offset 30)
+            (0x15, 0, 8, my_ip_hex),   # If dst IP != My, jump to reject
+            (0x30, 0, 0, 0x00000017),  # Load IP protocol (offset 23)
+            (0x15, 0, 6, 0x00000001),  # If protocol != ICMP (1), reject
+            (0x28, 0, 0, 0x00000014),  # Load IP fragment offset field (offset 20)
+            (0x45, 4, 0, 0x00001fff),  # If packet is a fragment, skip ICMP check
+            (0xb1, 0, 0, 0x0000000e),  # Load frame offset (IP header length)
+            (0x50, 0, 0, 0x0000000e),  # Load ICMP type (offset = IP header start + 0)
+            (0x15, 0, 1, 0x00000000),  # If ICMP type != 0 (Echo Reply), reject
+            (0x6,  0, 0, 0x00040000),  # Accept packet
+            (0x6,  0, 0, 0x00000000),  # Reject packet
+        ]
+    
+
+
+    @staticmethod
+    def _get_tcp_icmp_parameters() -> BPF_Instruction:
+        my_ip_hex:int = struct.unpack('!I', socket.inet_aton(get_my_ip_address()))[0]
+        return [
+            (0x28, 0, 0,  0x0000000c),  # Load EtherType (offset 12)
+            (0x15, 0, 11, 0x00000800),  # If != IPv4, jump to reject
+            (0x20, 0, 0,  0x0000001e),  # Load IP destination address (offset 30)
+            (0x15, 0, 9,  my_ip_hex),   # If dst IP != My IP, jump to reject
+            (0x30, 0, 0,  0x00000017),  # Load IP protocol (offset 23)
+            (0x15, 6, 0,  0x00000006),  # If protocol != TCP, jump 6 instructions
+            (0x15, 0, 6,  0x00000001),  # If protocol != ICMP (type 1 = Echo Request), jump 6 instructions
+            (0x28, 0, 0,  0x00000014),  # Load IP fragment offset field (offset 20)
+            (0x45, 4, 0,  0x00001fff),  # If packet is fragmented, skip ICMP check
+            (0xb1, 0, 0,  0x0000000e),  # Load ICMP type (0 for Echo Reply)
+            (0x50, 0, 0,  0x0000000e),  # Load the first byte of the ICMP header (type)
+            (0x15, 0, 1,  0x00000000),  # If ICMP type != Echo Reply (0), reject
+            (0x6,  0, 0,  0x00040000),  # Accept packet (capture 262144 bytes)
+            (0x6,  0, 0,  0x00000000),  # Reject packet
         ]

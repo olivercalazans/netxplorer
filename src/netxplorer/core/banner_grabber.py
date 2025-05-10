@@ -48,7 +48,7 @@ class Banner_Grabber:
 
     def _grab_banners_on_the_protocol(self) -> None:
         protocol = self._protocol_dictionary().get(self._data.arguments['protocol'])
-        port     = self._data.ports if self._data.ports else protocol['port']
+        port     = self._data.target_ports or protocol['port']
         protocol['func'](self._data.target_ip, port)
 
 

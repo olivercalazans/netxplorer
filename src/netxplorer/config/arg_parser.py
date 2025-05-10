@@ -46,14 +46,12 @@ class ArgParser_Manager:
         self._parser.add_argument('host', type=str, help='Target IP/Hostname')
         self._parser.add_argument('-r', '--random', action='store_true', help='Use the ports in random order')
         self._parser.add_argument('-p', '--ports', type=str, help='Specify ports to scan')
-        self._parser.add_argument('-a', '--all', action='store_true', help='Scan all ports')
         self._parser.add_argument('-d', '--delay', nargs='?', const=True, default=False, help='Add a delay between packet transmissions')
         self._parser = self._parser.parse_args(self._data.arguments)
 
         self._data.target_ip = self._parser.host
         self._data.arguments = {
             'ports':  self._parser.ports,
-            'all':    self._parser.all,
             'random': self._parser.random,
             'delay':  self._parser.delay,
         }
@@ -68,5 +66,5 @@ class ArgParser_Manager:
         self._parser = self._parser.parse_args(self._data.arguments)
 
         self._data.target_ip = self._parser.host
-        self._data.ports     = self._parser.port
+        self._data.target_ports     = self._parser.port
         self._data.arguments = {'protocol': self._parser.protocol}

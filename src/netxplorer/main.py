@@ -39,7 +39,7 @@ class Main:
 
     @classmethod
     def _verify_if_the_command_exists(cls) -> None:
-        if    cls._data.command_name in cls._commands:   cls._validate_arguments()
+        if    cls._data.command_name in cls._commands:    cls._validate_arguments()
         elif  cls._data.command_name in ('--help', '-h'): cls._display_description(cls._commands)
         else: print(f'Unknown command: {cls._data.command_name}')
 

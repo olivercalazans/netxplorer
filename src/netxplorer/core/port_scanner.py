@@ -7,12 +7,13 @@
 import random
 import time
 import sys
+from dissector.dissector      import Packet_Dissector
 from models.data              import Data
-from sniffing.sniffer         import Sniffer
 from pkt_build.packet_sender  import send_layer_3_packet
 from pkt_build.packet_builder import Packet_Builder
-from dissector.dissector      import Packet_Dissector
-from utils.network_info       import get_host_name, get_random_ports
+from sniffing.sniffer         import Sniffer
+from utils.network_info       import get_host_name
+from utils.port_set           import Port_Set
 from utils.type_hints         import Raw_Packet
 
 
@@ -26,18 +27,10 @@ class Port_Scanner:
         return cls._instance
 
 
-
-    STATUS = {
-        'SYN-ACK': 'OPENED',
-        'SYN':     'Potentially',
-    }
-
-
-    __slots__ = ('_data', '_responses')
+    __slots__ = ('_data')
 
     def __init__(self, data:Data) -> None:
-        self._data:Data           = data
-        self._responses:list|dict = None
+        self._data:Data = data
 
 
 
@@ -52,7 +45,7 @@ class Port_Scanner:
 
     def execute(self) -> None:
         try:
-            self._prepare_target_ports()
+            self._prepare_ports()
             self._send_and_receive()
             self._process_result()
             self._display_result()
@@ -61,31 +54,30 @@ class Port_Scanner:
 
 
 
-    def _prepare_target_ports(self) -> None:
-        if self._data.arguments['ports']: self._data.ports = self._data.arguments['ports']
-        elif self._data.arguments['all']: self._data.ports = 'all'
-        else:                             self._data.ports = 'common'
+    def _prepare_ports(self) -> None:
+        self._data.target_ports = self._data.arguments['ports'] or 'TCP'
         
         if self._data.arguments['random']:
-            random_list:list  = random.sample(list(self._data.ports.items()), len(self._data.ports))
-            self._data.ports = dict(random_list)
+            random.shuffle(self._data.target_ports)
+
+        self._data.my_ports = Port_Set.get_random_ports(len(self._data.target_ports))
 
 
 
     def _send_and_receive(self) -> None:
-        src_ports = ports_to_sniff = get_random_ports(len(self._data.ports))
-        with Sniffer('TCP', ports_to_sniff) as sniffer:
-            self._send_packets(src_ports)
+        with Sniffer(self._data, 'TCP') as sniffer:
+            self._send_packets()
             time.sleep(3)
-            self._responses = sniffer.get_packets()
+            sniffer.stop_sniffing()
 
 
 
-    def _send_packets(self, src_ports:list[int]) -> None:
+    def _send_packets(self) -> None:
         delay_list:list = self._get_delay_time_list()
-        len_ports:int   = len(self._data.ports)
+        len_ports:int   = len(self._data.target_ports)
         index:int       = 1
-        for delay, src_port, dst_port in zip(delay_list, src_ports, self._data.ports):
+
+        for delay, src_port, dst_port in zip(delay_list, self._data.my_ports, self._data.target_ports):
             packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(self._data.target_ip, src_port, dst_port)
             send_layer_3_packet(packet, self._data.target_ip, dst_port)
             self._display_progress(index, len_ports, delay)
@@ -104,47 +96,32 @@ class Port_Scanner:
 
 
     def _get_delay_time_list(self) -> list[int]:
-        if   self._data.arguments['delay'] is False: return [0.0 for _ in range(len(self._data.ports))]
-        elif self._data.arguments['delay'] is True:  return [random.uniform(0.5, 2) for _ in range(len(self._data.ports))]
+        if   self._data.arguments['delay'] is False: return [0.0 for _ in range(len(self._data.target_ports))]
+        elif self._data.arguments['delay'] is True:  return [random.uniform(0.5, 2) for _ in range(len(self._data.target_ports))]
 
         values = [float(value) for value in self._data.arguments['delay'].split('-')]
+
         if len(values) > 1:
-            return [random.uniform(values[0], values[1]) for _ in range(len(self._data.ports))]
-        return [values[0] for _ in range(len(self._data.ports))]
+            return [random.uniform(values[0], values[1]) for _ in range(len(self._data.target_ports))]
+        
+        return [values[0] for _ in range(len(self._data.target_ports))]
 
 
 
     def _process_result(self) -> None:
-        results:dict = {'TCP':[]}        
-        with Packet_Dissector() as dissector:
-            for protocol in self._responses:
-                for packet in self._responses[protocol]:
-                    pkt_info:dict            = dissector.process_packet(packet)
-                    _, port, flags, protocol = pkt_info.values()
-                    
-                    if flags not in self.STATUS: continue
-
-                    status, description = self._get_descriptions(port, flags)
-                    results[protocol].append((status, port, description, flags))
-
-        self._responses = results
-
-    
-
-    def _get_descriptions(self, port:int, flags:str) -> tuple[str, str]:
-        description = self._data.ports.get(port, 'Unknown port')
-        status      = self.STATUS.get(flags)
-        return status, description
+        with Packet_Dissector(self._data) as dissector:
+            dissector.dissect_packets()
 
 
 
     def _display_result(self) -> None:
         print(f'>> IP: {self._data.target_ip} - Hostname: {get_host_name(self._data.target_ip)}')
         open_ports = 0
-        for protocol in self._responses:
-            for status, port, description, flags in self._responses[protocol]:
-                if flags == 'SYN-ACK':
-                    open_ports += 1
+        for _, _, port, status in self._data.responses['TCP']:
+            description:str = Port_Set.get_tcp_port_description(port)
 
-                print(f'Status: {status:>11} -> {port:>5} - {description}')
-        print(f'Open ports: {open_ports}/{len(self._data.ports)}')
+            if status == 'OPENED':
+                open_ports += 1
+
+            print(f'Status: {status:>11} -> {port:>5} - {description}')
+        print(f'Open ports: {open_ports}/{len(self._data.target_ports)}')

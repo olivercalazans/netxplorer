@@ -4,9 +4,10 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-from dataclasses    import dataclass
-from socket         import gethostbyname
-from utils.port_set import Port_Set
+from dataclasses      import dataclass, field
+from socket           import gethostbyname
+from utils.port_set   import Port_Set
+from utils.type_hints import Raw_Packet
 
 
 @dataclass(slots=True)
@@ -21,10 +22,13 @@ class Data:
 
 
 
-    command_name:str = None
-    arguments:list   = None
-    _target_ip:str   = None 
-    _ports:dict      = None
+    command_name:str             = None
+    arguments:list               = None
+    my_ports:list                = None
+    _target_ip:str               = None 
+    _target_ports:list           = None
+    raw_packets:list[Raw_Packet] = field(default_factory=list)
+    responses:dict               = field(default_factory=lambda: {'TCP':[], 'ICMP':[]})
 
 
 
@@ -40,11 +44,9 @@ class Data:
     
 
     @property
-    def ports(self) -> dict|list:
-        return self._ports
+    def target_ports(self) -> list:
+        return self._target_ports
     
-    @ports.setter
-    def ports(self, input_ports:str) -> None:
-        match input_ports:
-            case str():  self._ports = Port_Set().get_ports(input_ports)
-            case dict(): self._ports = input_ports
+    @target_ports.setter
+    def target_ports(self, input_ports:str) -> None:
+        self._target_ports = Port_Set.get_ports(input_ports)

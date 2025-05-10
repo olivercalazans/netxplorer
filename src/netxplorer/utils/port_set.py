@@ -4,32 +4,29 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import re
+import random
 
 
 class Port_Set:
 
+    def get_random_ports(number:int) -> list[int]:
+        return [random.randint(10000, 65535) for _ in range(number)]
+
+
+
     @staticmethod
-    def get_ports(port_str='all') -> dict:
+    def get_ports(port_str:str) -> dict:
         match port_str:
-            case 'common':   return Port_Set._COMMON_TCP_PORTS
-            case 'uncommon': return Port_Set._COMMON_TCP_PORTS
-            case 'all':      return Port_Set._mix_tcp_ports()
-            case _:          return Port_Set._get_specific_ports(port_str)
+            case 'TCP': return list(Port_Set.TCP_PORTS.keys())
+            case _:     return Port_Set._get_specific_ports(port_str)
 
-
-    @classmethod
-    def _mix_tcp_ports(cls) -> dict:
-        return {**cls._COMMON_TCP_PORTS, **cls._UNCOMMON_TCP_PORTS}
 
 
     @staticmethod
-    def _get_specific_ports(string:str) -> dict:
-        ALL_PORTS:dict = Port_Set._mix_tcp_ports()
-        parts:list     = re.split(r',', string)
-        result:list    = list()
+    def _get_specific_ports(string:str) -> list[int]:
+        result:list = []
 
-        for part in parts:
+        for part in string.split(','):
             if '-' in part:
                 start, end = map(int, part.split('-'))
                 if start >= end: raise ValueError(f'Invalid range: {start}-{end}')
@@ -37,11 +34,17 @@ class Port_Set:
             else:
                 result.append(int(part))
 
-        return {port: ALL_PORTS.get(port, 'Ephemeral Port / Dynamic Port') for port in result}
+        return result
+    
+
+
+    @staticmethod
+    def get_tcp_port_description(port:int) -> str:
+        return Port_Set.TCP_PORTS.get(port, 'Ephemeral Port / Dynamic Port')
 
 
 
-    _COMMON_TCP_PORTS = {
+    TCP_PORTS = {       
         20   : 'FTP - File Transfer Protocol (Data Transfer)',  
         21   : 'FTP - File Transfer Protocol (Command)',  
         22   : 'SSH - Secure Shell',  
@@ -49,40 +52,26 @@ class Port_Set:
         25   : 'SMTP - Simple Mail Transfer Protocol',  
         53   : 'DNS - Domain Name System',  
         67   : 'DHCP - Dynamic Host Configuration Protocol (Server)',  
-        68   : 'DHCP - Dynamic Host Configuration Protocol (Client)',  
+        68   : 'DHCP - Dynamic Host Configuration Protocol (Client)',
+        69   : 'TFTP - Trivial File Transfer Protocol',  
         80   : 'HTTP - HyperText Transfer Protocol',  
         110  : 'POP3 - Post Office Protocol version 3',  
         143  : 'IMAP - Internet Message Access Protocol',  
-        161  : 'SNMP - Simple Network Management Protocol',  
-        443  : 'HTTPS - HTTP Protocol over TLS/SSL',  
-        445  : 'SMB - Server Message Block',  
-        587  : 'SMTP - Submission',  
-        993  : 'IMAPS - IMAP over SSL',  
-        995  : 'POP3S - POP3 over SSL',  
-        3306 : 'MySQL/MariaDB',  
-        3389 : 'RDP - Remote Desktop Protocol',  
-        5432 : 'PostgreSQL',  
-        5900 : 'VNC - Virtual Network Computing',  
-        8080 : 'HTTP Alternative - Jakarta Tomcat',  
-        8443 : 'HTTPS Alternative - Tomcat SSL',  
-        8888 : 'HTTP Alternative',  
-        11211: 'Memcached',  
-        27017: 'MongoDB'
-    }
-
-
-
-    _UNCOMMON_TCP_PORTS = {
-        69   : 'TFTP - Trivial File Transfer Protocol',  
+        161  : 'SNMP - Simple Network Management Protocol',
         179  : 'BGP - Border Gateway Protocol',  
-        194  : 'IRC - Internet Relay Chat',  
+        194  : 'IRC - Internet Relay Chat',   
+        443  : 'HTTPS - HTTP Protocol over TLS/SSL',  
+        445  : 'SMB - Server Message Block',
         465  : 'SMTPS - SMTP Secure (SSL)',  
         514  : 'Syslog - System Logging Protocol',  
         531  : 'RPC - Remote Procedure Call',  
         543  : 'Klogin - Kerberos Login',  
-        550  : 'Kshell - Kerberos Shell',  
+        550  : 'Kshell - Kerberos Shell',     
+        587  : 'SMTP - Submission',
         631  : 'IPP - Internet Printing Protocol',  
-        636  : 'LDAPS - Lightweight Directory Access Protocol over SSL',  
+        636  : 'LDAPS - Lightweight Directory Access Protocol over SSL', 
+        993  : 'IMAPS - IMAP over SSL',  
+        995  : 'POP3S - POP3 over SSL',
         1080 : 'SOCKS Proxy',  
         1433 : 'Microsoft SQL Server',  
         1434 : 'Microsoft SQL Server Resolution',  
@@ -92,26 +81,34 @@ class Port_Set:
         1883 : 'MQTT - Message Queuing Telemetry Transport',  
         2049 : 'NFS - Network File System',  
         2181 : 'Zookeeper',  
-        3690 : 'SVN - Subversion',  
+        3306 : 'MySQL/MariaDB',
         3372 : 'NAT-T - Network Address Translation Traversal (IPsec)',  
-        4500 : 'NAT-T - Network Address Translation Traversal (IPsec)',  
+        3389 : 'RDP - Remote Desktop Protocol',
+        3690 : 'SVN - Subversion',  
+        4500 : 'NAT-T - Network Address Translation Traversal (IPsec)',
         5000 : 'UPnP - Universal Plug and Play',  
-        5001 : 'Synology NAS',  
+        5001 : 'Synology NAS', 
+        5432 : 'PostgreSQL',
         5800 : 'VNC - Virtual Network Computing',  
+        5900 : 'VNC - Virtual Network Computing',
         6379 : 'Redis',  
         7070 : 'RealServer',  
         7777 : 'IIS - Microsoft Internet Information Services',  
-        7778 : 'IIS - Microsoft Internet Information Services',  
-        8000 : 'HTTP Alternate',  
-        10000: 'Webmin',  
-        20000: 'Webmin',  
+        7778 : 'IIS - Microsoft Internet Information Services',     
+        8080 : 'HTTP Alternative - Jakarta Tomcat',  
+        8443 : 'HTTPS Alternative - Tomcat SSL',
+        8000 : 'HTTP Alternate', 
+        8888 : 'HTTP Alternative',
+        10000: 'Webmin',   
+        11211: 'Memcached',
+        20000: 'Webmin', 
+        27017: 'MongoDB',
         50000: 'SAP',  
-        52000: 'Apple Remote Desktop',    
+        52000: 'Apple Remote Desktop'
     }
 
 
-
-    _COMMON_UDP_PORTS = {
+    UDP_PORTS = {
         53    : 'DNS - Domain Name System (queries)',
         67    : 'DHCP - Dynamic Host Configuration Protocol (Server)',
         68    : 'DHCP - Dynamic Host Configuration Protocol (Client)',

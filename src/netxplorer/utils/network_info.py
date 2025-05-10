@@ -9,7 +9,6 @@ import fcntl
 import struct
 import subprocess
 import ipaddress
-import random
 
 
 def get_default_iface() -> str:
@@ -59,8 +58,3 @@ def get_host_name(ip:str) -> str:
         hostname:str = socket.gethostbyaddr(ip)[0]
         return hostname[:-4] if hostname[-4:] == '.lan' else hostname
     except: return 'Unknown'
-
-
-
-def get_random_ports(number:int) -> list[int]:
-    return [random.randint(10000, 65535) for _ in range(number)]

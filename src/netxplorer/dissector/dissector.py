@@ -7,7 +7,7 @@
 import struct
 from dissector.ip_dissector  import IP_Dissector
 from dissector.tcp_dissector import TCP_Dissector
-from utils.type_hints        import Raw_Packet
+from models.data             import Data
 
 
 class Packet_Dissector(IP_Dissector, TCP_Dissector):
@@ -21,9 +21,10 @@ class Packet_Dissector(IP_Dissector, TCP_Dissector):
 
 
 
-    __slots__ = ('_packet', '_ip_header')
+    __slots__ = ('_data', '_packet', '_ip_header')
 
-    def __init__(self) -> None:
+    def __init__(self, data:Data) -> None:
+        self._data:Data            = data
         self._packet:memoryview    = None
         self._ip_header:memoryview = None
 
@@ -38,37 +39,45 @@ class Packet_Dissector(IP_Dissector, TCP_Dissector):
 
 
 
-    def process_packet(self, raw_packet:Raw_Packet) -> None:
-        self._packet    = memoryview(raw_packet)
-        self._ip_header = super().get_ip_header(self._packet)
-        protocol:int    = super().get_protocol(self._ip_header)
+    def dissect_packets(self) -> None:
+        while self._data.raw_packets:
+            self._packet      = memoryview(self._data.raw_packets.pop())
+            self._ip_header   = super().get_ip_header(self._packet)
+            protocol_byte:int = super().get_protocol(self._ip_header)
 
-        match protocol:
-            case 1: return self._dissect_icmp_packet()
-            case 6: return self._dissect_tcp_packet()
-            case _: return None
+            match protocol_byte:
+                case 1: protocol, packet_info = self._dissect_icmp_packet()
+                case 6: protocol, packet_info = self._dissect_tcp_packet()
+                case _: continue
+
+            if protocol is None: continue
+
+            self._data.responses[protocol].insert(0, packet_info)
 
     
 
-    def _dissect_tcp_packet(self) -> dict:
+    def _dissect_tcp_packet(self) -> tuple[str, tuple] | None:
         try:
             source_ip:str    = super().get_source_ip(self._ip_header)
             tcp_header:tuple = super().get_tcp_header(self._packet, self._ip_header)
             source_port:int  = super().get_tcp_source_port(tcp_header)
-            tcp_flags:str    = super().get_tcp_flags(tcp_header)
-            return {'ip':source_ip, 'port': source_port, 'flags': tcp_flags, 'protocol': 'TCP'}
+            flag_status:str  = super().get_tcp_flag_status(tcp_header)
+
+            if flag_status is None: return None, None
+
+            return 'TCP', (source_ip, 'TCP', source_port, flag_status)
         except (IndexError, struct.error, ValueError):
-            return None
+            return None, None
 
 
 
-    def _dissect_icmp_packet(self) -> dict:
+    def _dissect_icmp_packet(self) -> tuple[str, tuple] | None:
         try:
             source_mac:str = self._get_source_mac_address(self._packet)
             source_ip:str  = super().get_source_ip(self._ip_header)
-            return {'ip': source_ip, 'mac': source_mac, 'protocol': 'ICMP'}
+            return 'ICMP', (source_mac, source_ip, 'ICMP')
         except (IndexError, struct.error, ValueError):
-            return None
+            return None, None
 
 
 

@@ -7,10 +7,12 @@
 import time
 import random
 from dissector.dissector      import Packet_Dissector
+from models.data              import Data
 from pkt_build.packet_builder import Packet_Builder
 from pkt_build.packet_sender  import send_ping, send_layer_3_packet
 from sniffing.sniffer         import Sniffer
-from utils.network_info       import get_ip_range, get_host_name, get_random_ports
+from utils.network_info       import get_ip_range, get_host_name
+from utils.port_set           import Port_Set
 from utils.type_hints         import Raw_Packet
 
 
@@ -27,7 +29,8 @@ class Network_Mapper:
 
     __slots__ = ('_responses', '_results')
 
-    def __init__(self, _) -> None:
+    def __init__(self, data:Data) -> None:
+        self._data:Data      = data
         self._responses:list = None
         self._results:dict   = {}
     
@@ -53,19 +56,18 @@ class Network_Mapper:
 
 
     def _perform_mapping(self) -> None:
-        source_ports:list = get_random_ports(5)
-        with Sniffer('TCP-ICMP', tcp_ports=source_ports) as sniffer:
-            self._send_packets(source_ports)
+        self._data.my_ports = Port_Set.get_random_ports(5)
+        with Sniffer('TCP-ICMP') as sniffer:
+            self._send_packets()
             time.sleep(3)
             self._responses = sniffer.get_packets()
     
 
 
-    @staticmethod
-    def _send_packets(source_ports:list) -> None:
+    def _send_packets(self) -> None:
         icmp_packet:Raw_Packet = Packet_Builder().get_icmp_packet()
         for ip in get_ip_range():
-            random_src_port:int   = random.choice(source_ports)
+            random_src_port:int   = random.choice(self._data.my_ports)
             tcp_packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(ip, 80, random_src_port)
             send_ping(icmp_packet, ip)
             send_layer_3_packet(tcp_packet, ip, 80)
@@ -74,16 +76,17 @@ class Network_Mapper:
 
     def _process_responses(self) -> None:
         with Packet_Dissector() as dissector:
-            for packet in self._responses:
-                pkt_info:dict = dissector.process_packet(packet)
-                self._update_data(pkt_info)
+            for protocol in self._responses:
+                for packet in self._responses[protocol]:
+                    pkt_info:dict = dissector.dissect_packets(packet)
+                    self._update_data(pkt_info)
 
     
 
     def _update_data(self, pkt_info:dict) -> None:
         ip:str          = pkt_info['ip']
         mac_address:str = pkt_info['mac'] if 'mac' in pkt_info else None
-        protocol:str    = pkt_info['protocol'] if 'protocol' in pkt_info else None
+        protocol:str    = pkt_info['protocol']
 
         if ip not in self._results:
             self._results[ip] = {'mac': 'Unknown', 'protocols': []}
