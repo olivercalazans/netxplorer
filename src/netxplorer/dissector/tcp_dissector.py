@@ -13,8 +13,8 @@ class TCP_Dissector:
     TCP_FLAG_STATUS:dict = {
             0b00010010: 'OPENED', #.......: SYN-ACK > (0b00000010 + 0b00010000)
             0b00000010: 'Potencially',#...: SYN
-            0b00010100: None, #...........: RST-ACK > (0b00000100 + 0b00010000)
-            0b00000100: None, #...........: RST
+            0b00010100: 'Closed', #.......: RST-ACK > (0b00000100 + 0b00010000)
+            0b00000100: 'Closed', #.......: RST
             0b00000001: None #............: FIN
     }
 

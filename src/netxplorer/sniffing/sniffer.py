@@ -61,7 +61,7 @@ class Sniffer:
 
     def _sniff(self) -> None:
         while self._running is True:
-            readable, _, _= select.select([self._sniffer], [], [], 0.001)
+            readable, _, _= select.select([self._sniffer], [], [], 0)
             if readable:
                 packet, _ = self._sniffer.recvfrom(65535)
                 self._queue.put(packet)

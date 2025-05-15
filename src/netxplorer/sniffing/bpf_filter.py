@@ -16,7 +16,6 @@ class BPF_Filter:
     def get_filter(protocol:str) -> BPF_Instruction:
         match protocol:
             case 'TCP':      return BPF_Filter._get_tcp_parameters()
-            case 'ICMP':     return BPF_Filter._get_icmp_parameters()
             case 'TCP-ICMP': return BPF_Filter._get_tcp_icmp_parameters()
 
 
@@ -40,27 +39,6 @@ class BPF_Filter:
             (0x6,  0,  0, 0x00040000), # Accept packet (return up to 262144 bytes)
             (0x6,  0,  0, 0x00000000), # Reject everything else
         ]
-
-
-
-    @staticmethod
-    def _get_icmp_parameters() -> BPF_Instruction:
-        my_ip_hex:int = struct.unpack('!I', socket.inet_aton(get_my_ip_address()))[0]
-        return [
-            (0x28, 0, 0, 0x0000000c),  # Load EtherType (offset 12)
-            (0x15, 0,10, 0x00000800),  # If != IPv4, jump to reject
-            (0x20, 0, 0, 0x0000001e),  # Load IP dst address (offset 30)
-            (0x15, 0, 8, my_ip_hex),   # If dst IP != My, jump to reject
-            (0x30, 0, 0, 0x00000017),  # Load IP protocol (offset 23)
-            (0x15, 0, 6, 0x00000001),  # If protocol != ICMP (1), reject
-            (0x28, 0, 0, 0x00000014),  # Load IP fragment offset field (offset 20)
-            (0x45, 4, 0, 0x00001fff),  # If packet is a fragment, skip ICMP check
-            (0xb1, 0, 0, 0x0000000e),  # Load frame offset (IP header length)
-            (0x50, 0, 0, 0x0000000e),  # Load ICMP type (offset = IP header start + 0)
-            (0x15, 0, 1, 0x00000000),  # If ICMP type != 0 (Echo Reply), reject
-            (0x6,  0, 0, 0x00040000),  # Accept packet
-            (0x6,  0, 0, 0x00000000),  # Reject packet
-        ]
     
 
 
@@ -68,18 +46,26 @@ class BPF_Filter:
     def _get_tcp_icmp_parameters() -> BPF_Instruction:
         my_ip_hex:int = struct.unpack('!I', socket.inet_aton(get_my_ip_address()))[0]
         return [
-            (0x28, 0, 0,  0x0000000c),  # Load EtherType (offset 12)
-            (0x15, 0, 11, 0x00000800),  # If != IPv4, jump to reject
-            (0x20, 0, 0,  0x0000001e),  # Load IP destination address (offset 30)
-            (0x15, 0, 9,  my_ip_hex),   # If dst IP != My IP, jump to reject
-            (0x30, 0, 0,  0x00000017),  # Load IP protocol (offset 23)
-            (0x15, 6, 0,  0x00000006),  # If protocol != TCP, jump 6 instructions
-            (0x15, 0, 6,  0x00000001),  # If protocol != ICMP (type 1 = Echo Request), jump 6 instructions
-            (0x28, 0, 0,  0x00000014),  # Load IP fragment offset field (offset 20)
-            (0x45, 4, 0,  0x00001fff),  # If packet is fragmented, skip ICMP check
-            (0xb1, 0, 0,  0x0000000e),  # Load ICMP type (0 for Echo Reply)
-            (0x50, 0, 0,  0x0000000e),  # Load the first byte of the ICMP header (type)
-            (0x15, 0, 1,  0x00000000),  # If ICMP type != Echo Reply (0), reject
-            (0x6,  0, 0,  0x00040000),  # Accept packet (capture 262144 bytes)
-            (0x6,  0, 0,  0x00000000),  # Reject packet
+            (0x28,  0,  0, 0x0000000c), # Load EtherType (offset 12) into A
+            (0x15,  0, 19, 0x00000800), # If EtherType != IPv4 (0x0800), jump to reject
+            (0x20,  0,  0, 0x0000001e), # Load destination IP (offset 30) into A
+            (0x15,  0, 17, my_ip_hex),  # If dest IP != my IP, jump to reject
+            (0x30,  0,  0, 0x00000017), # Load IP protocol (offset 23) into A
+            (0x15,  0,  5, 0x00000001), # If protocol == ICMP (0x01), jump ahead to ICMP check
+            (0x28,  0,  0, 0x00000014), # Load IP flags/frag offset
+            (0x45, 13,  0, 0x00001fff), # If fragmented, skip all (frag != 0), jump to reject
+            (0xb1,  0,  0, 0x0000000e), # A = A + 14 (to get start of IP header)
+            (0x50,  0,  0, 0x0000000e), # Load ICMP type (offset 14) into A
+            (0x15,  9, 10, 0x00000000), # If ICMP type == 0 (Echo Reply), accept
+            (0x15,  0,  9, 0x00000006), # If not TCP (protocol != 6), jump to reject
+            (0x28,  0,  0, 0x00000014), # Load IP flags/frag offset again (needed for TCP branch)
+            (0x45,  7,  0, 0x00001fff), # If fragmented, reject
+            (0xb1,  0,  0, 0x0000000e), # A = A + 14 again
+            (0x50,  0,  0, 0x0000001b), # Load TCP flags (offset 27 from IP header)
+            (0x54,  0,  0, 0x00000012), # Mask flags with SYN (0x02) + ACK (0x10)
+            (0x15,  2,  0, 0x00000012), # If SYN-ACK, accept
+            (0x50,  0,  0, 0x0000001b), # Load TCP flags again
+            (0x45,  0,  1, 0x00000004), # If RST bit set, accept
+            (0x6,   0,  0, 0x00040000), # Accept packet (return 262144 bytes)
+            (0x6,   0,  0, 0x00000000), # Reject otherwise
         ]
