@@ -25,14 +25,20 @@ class BPF_Filter:
     def _get_tcp_parameters() -> BPF_Instruction:
         my_ip_hex:int = struct.unpack('!I', socket.inet_aton(get_my_ip_address()))[0]
         return [
-            (0x28, 0, 0, 0x0000000c),  # Load EtherType (offset 12)
-            (0x15, 0, 5, 0x00000800),  # If != IPv4, jump to reject
-            (0x20, 0, 0, 0x0000001e),  # Load IP dst address (offset 30)
-            (0x15, 0, 3, my_ip_hex),   # If dst IP != My IP, jump to reject
-            (0x30, 0, 0, 0x00000017),  # Load IP protocol (offset 23)
-            (0x15, 0, 1, 0x00000006),  # If protocol != TCP, jump to reject
-            (0x06, 0, 0, 0x00040000),  # Accept packet (capture 262144 bytes)
-            (0x06, 0, 0, 0x00000000),  # Reject packet
+            (0x28, 0,  0, 0x0000000c), # Load EtherType field (offset 12)
+            (0x15, 0, 11, 0x00000800), # If not IPv4 (0x0800), jump to end
+            (0x20, 0,  0, 0x0000001e), # Load destination IP address (offset 30)
+            (0x15, 0,  9, my_ip_hex),  # If not my IP, jump
+            (0x30, 0,  0, 0x00000017), # Load IP protocol field (offset 23)
+            (0x15, 0,  7, 0x00000006), # If not TCP (protocol 6), jump
+            (0x28, 0,  0, 0x00000014), # Load IP flags/fragment offset field
+            (0x45, 5,  0, 0x00001fff), # If packet is fragmented, jump
+            (0xb1, 0,  0, 0x0000000e), # Calculate TCP header offset (IHL * 4)
+            (0x50, 0,  0, 0x0000001b), # Load TCP flags byte (offset 27 from IP header)
+            (0x54, 0,  0, 0x00000012), # Mask with SYN+ACK (0x12)
+            (0x15, 0,  1, 0x00000012), # If flags are exactly SYN+ACK, continue
+            (0x6,  0,  0, 0x00040000), # Accept packet (return up to 262144 bytes)
+            (0x6,  0,  0, 0x00000000), # Reject everything else
         ]
 
 

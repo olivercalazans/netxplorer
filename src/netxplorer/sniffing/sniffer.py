@@ -88,7 +88,7 @@ class Sniffer:
 
     def _create_sniffer(self) -> BPF_Configured_Socket:
         sniffer:socket.socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
-        sniffer.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2**30)
+        sniffer.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2 * 1024 * 1024)
         sniffer.bind((get_default_iface(), 0))
 
         bpf_filter:BPF_Instruction = BPF_Filter.get_filter(self._protocols)
