@@ -46,17 +46,12 @@ class Network_Mapper:
 
     def execute(self) -> None:
         try:
-            self._prepare_ports()
             self._perform_mapping()
             self._process_packets()
             self._process_responses()
             self._display_result()
         except KeyboardInterrupt:  print('Process stopped')
         except Exception as error: print(f'ERROR: {error}')
-
-
-    def _prepare_ports(self) -> None:
-        self._data.my_ports = Port_Set.get_random_ports(5)
 
 
 
@@ -71,8 +66,7 @@ class Network_Mapper:
     def _send_packets(self) -> None:
         icmp_packet:Raw_Packet = Packet_Builder().get_icmp_packet()
         for ip in get_ip_range():
-            random_src_port:int   = random.choice(self._data.my_ports)
-            tcp_packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(ip, 80, random_src_port)
+            tcp_packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(ip, 80)
             send_ping(icmp_packet, ip)
             send_layer_3_packet(tcp_packet, ip, 80)
 
@@ -90,6 +84,7 @@ class Network_Mapper:
         
         if self._data.responses['TCP']:
             self._process_tcp_responses()
+
 
     
     def _process_icmp_reponses(self) -> None:

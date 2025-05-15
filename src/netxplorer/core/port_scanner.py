@@ -60,8 +60,6 @@ class Port_Scanner:
         if self._data.arguments['random']:
             random.shuffle(self._data.target_ports)
 
-        self._data.my_ports = Port_Set.get_random_ports(len(self._data.target_ports))
-
 
 
     def _send_and_receive(self) -> None:
@@ -77,8 +75,8 @@ class Port_Scanner:
         len_ports:int   = len(self._data.target_ports)
         index:int       = 1
 
-        for delay, src_port, dst_port in zip(delay_list, self._data.my_ports, self._data.target_ports):
-            packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(self._data.target_ip, src_port, dst_port)
+        for delay, dst_port in zip(delay_list, self._data.target_ports):
+            packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(self._data.target_ip, dst_port)
             send_layer_3_packet(packet, self._data.target_ip, dst_port)
             self._display_progress(index, len_ports, delay)
             time.sleep(delay)
@@ -96,15 +94,17 @@ class Port_Scanner:
 
 
     def _get_delay_time_list(self) -> list[int]:
-        if   self._data.arguments['delay'] is False: return [0.0 for _ in range(len(self._data.target_ports))]
-        elif self._data.arguments['delay'] is True:  return [random.uniform(0.5, 2) for _ in range(len(self._data.target_ports))]
+        match self._data.arguments['delay']:
+            case False: return [0.05 for _ in range(len(self._data.target_ports))]
+            case True:  return [random.uniform(0.5, 2) for _ in range(len(self._data.target_ports))]
+            case _:
+                
+                values = [float(value) for value in self._data.arguments['delay'].split('-')]
 
-        values = [float(value) for value in self._data.arguments['delay'].split('-')]
+                if len(values) > 1:
+                    return [random.uniform(values[0], values[1]) for _ in range(len(self._data.target_ports))]
 
-        if len(values) > 1:
-            return [random.uniform(values[0], values[1]) for _ in range(len(self._data.target_ports))]
-        
-        return [values[0] for _ in range(len(self._data.target_ports))]
+                return [values[0] for _ in range(len(self._data.target_ports))]
 
 
 

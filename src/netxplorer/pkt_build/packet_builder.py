@@ -19,7 +19,7 @@ class Packet_Builder():
     
 
     @staticmethod
-    def get_tcp_ip_packet(dst_ip:int, src_port:str, dst_port:int) -> Raw_Packet:
+    def get_tcp_ip_packet(dst_ip:int, dst_port:int) -> Raw_Packet:
         ip_header:bytes  = IP.create_ip_header(dst_ip)
-        tcp_header:bytes = TCP.create_tcp_header(dst_ip, src_port, dst_port)
+        tcp_header:bytes = TCP.create_tcp_header(dst_ip, dst_port)
         return ip_header + tcp_header

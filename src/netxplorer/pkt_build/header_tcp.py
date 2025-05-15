@@ -4,6 +4,7 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
+import random
 import socket
 from struct                  import Struct
 from pkt_build.layer_4_utils import Layer_4_Utils
@@ -26,7 +27,8 @@ class TCP:
 
 
     @classmethod
-    def create_tcp_header(cls, dst_ip:int, src_port:str, dst_port:int) -> bytes:
+    def create_tcp_header(cls, dst_ip:int, dst_port:int) -> bytes:
+        src_port:int     = random.randint(10000, 65535)
         fields:list      = list(cls._BASE_TCP_FIELDS)
         fields[0:2]      = [src_port, dst_port]
         tcp_header:bytes = cls._TCP_STRUCT.pack(*fields)

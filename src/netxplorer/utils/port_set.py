@@ -4,15 +4,8 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
-import random
-
 
 class Port_Set:
-
-    def get_random_ports(number:int) -> list[int]:
-        return [random.randint(10000, 65535) for _ in range(number)]
-
-
 
     @staticmethod
     def get_ports(port_str:str) -> dict:

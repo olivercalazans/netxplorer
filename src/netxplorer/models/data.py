@@ -24,7 +24,6 @@ class Data:
 
     command_name:str             = None
     arguments:list               = None
-    my_ports:list                = None
     _target_ip:str               = None 
     _target_ports:list           = None
     raw_packets:list[Raw_Packet] = field(default_factory=list)
