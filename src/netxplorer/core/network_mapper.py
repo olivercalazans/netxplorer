@@ -64,8 +64,9 @@ class Network_Mapper:
 
 
     def _send_packets(self) -> None:
+        self._data.target_ip   = get_ip_range()
         icmp_packet:Raw_Packet = Packet_Builder().get_icmp_packet()
-        for ip in get_ip_range():
+        for ip in self._data.target_ip:
             tcp_packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(ip, 80)
             send_ping(icmp_packet, ip)
             send_layer_3_packet(tcp_packet, ip, 80)
@@ -89,7 +90,7 @@ class Network_Mapper:
     
     def _process_icmp_reponses(self) -> None:
         while self._data.responses['ICMP']:
-            mac_addr, ip      = self._data.responses['ICMP'].pop()
+            ip, mac_addr      = self._data.responses['ICMP'].pop()
             self._results[ip] = {'mac': mac_addr, 'protocols': ['ICMP']}
 
 

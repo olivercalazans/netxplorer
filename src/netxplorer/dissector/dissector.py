@@ -59,7 +59,7 @@ class Packet_Dissector(IP_Dissector, TCP_Dissector):
 
             if protocol is None: continue
 
-            self._data.responses[protocol].insert(0, packet_info)
+            self._data.add_packet(protocol, packet_info)
         sys.stdout.write('\n')
 
     
@@ -90,7 +90,7 @@ class Packet_Dissector(IP_Dissector, TCP_Dissector):
         try:
             source_mac:str = self._get_source_mac_address(self._packet)
             source_ip:str  = super().get_source_ip(self._ip_header)
-            return 'ICMP', (source_mac, source_ip)
+            return 'ICMP', (source_ip, source_mac)
         except (IndexError, struct.error, ValueError):
             return None, None
 
