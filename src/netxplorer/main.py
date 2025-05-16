@@ -6,9 +6,9 @@
 
 import sys
 from config.arg_parser   import ArgParser_Manager
-from core.port_scanner   import Port_Scanner
 from core.banner_grabber import Banner_Grabber
 from core.network_mapper import Network_Mapper
+from core.port_scanner   import Port_Scanner
 from models.data         import Data
 
 
