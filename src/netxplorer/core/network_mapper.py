@@ -66,11 +66,13 @@ class Network_Mapper:
         self._data.target_ip   = get_ip_range()
         total_ips:int          = len(self._data.target_ip)
         icmp_packet:Raw_Packet = Packet_Builder().get_icmp_packet()
+        
         for index ,ip in enumerate(self._data.target_ip, start=1):
             tcp_packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(ip, 80)
             send_ping(icmp_packet, ip)
             send_layer_3_packet(tcp_packet, ip, 80)
             self._display_progress(index, total_ips)
+            time.sleep(0.04)
 
 
     
