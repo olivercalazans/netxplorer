@@ -5,14 +5,13 @@
 
 
 import time
-import random
+import sys
 from dissector.dissector      import Packet_Dissector
 from models.data              import Data
 from pkt_build.packet_builder import Packet_Builder
 from pkt_build.packet_sender  import send_ping, send_layer_3_packet
 from sniffing.sniffer         import Sniffer
 from utils.network_info       import get_ip_range, get_host_name
-from utils.port_set           import Port_Set
 from utils.type_hints         import Raw_Packet
 
 
@@ -65,11 +64,20 @@ class Network_Mapper:
 
     def _send_packets(self) -> None:
         self._data.target_ip   = get_ip_range()
+        total_ips:int          = len(self._data.target_ip)
         icmp_packet:Raw_Packet = Packet_Builder().get_icmp_packet()
-        for ip in self._data.target_ip:
+        for index ,ip in enumerate(self._data.target_ip, start=1):
             tcp_packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(ip, 80)
             send_ping(icmp_packet, ip)
             send_layer_3_packet(tcp_packet, ip, 80)
+            self._display_progress(index, total_ips)
+
+
+    
+    @staticmethod
+    def _display_progress(index:int, total:int) -> None:
+        sys.stdout.write(f'\rPackets sent: {index}/{total}')
+        sys.stdout.flush()
 
 
 

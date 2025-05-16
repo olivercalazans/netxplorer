@@ -78,6 +78,7 @@ class Port_Scanner:
         for delay, dst_port in zip(delay_list, self._data.target_ports):
             packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(self._data.target_ip, dst_port)
             send_layer_3_packet(packet, self._data.target_ip, dst_port)
+            
             self._display_progress(index, len_ports, delay)
             time.sleep(delay)
             index += 1
@@ -88,7 +89,7 @@ class Port_Scanner:
     
     @staticmethod
     def _display_progress(index:int, len_ports:int, delay:float) -> None:
-        sys.stdout.write(f'\rPacket sent: {index}/{len_ports} >> delay {delay:.2f}')
+        sys.stdout.write(f'\rPackets sent: {index}/{len_ports} >> delay {delay:.2f}')
         sys.stdout.flush()
 
 
@@ -123,5 +124,5 @@ class Port_Scanner:
             if status == 'OPENED':
                 open_ports += 1
 
-            print(f'Status: {status:>11} -> {port:>5} - {description}')
+            print(f'Status: {status} -> {port:>5} - {description}')
         print(f'Open ports: {open_ports}/{len(self._data.target_ports)}')
