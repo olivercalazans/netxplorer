@@ -12,7 +12,7 @@ from utils.network_info import get_my_ip_address
 class Layer_4_Utils:
 
     _PSEUDO_HEADER_STRUCT:Struct = Struct('!4s4sBBH')
-    _MY_IP:str                   = socket.inet_aton(get_my_ip_address())
+    _MY_IP:str = socket.inet_aton(get_my_ip_address())
 
 
     @classmethod

@@ -27,7 +27,7 @@ class Data:
     _target_ip:str               = None 
     _target_ports:list           = None
     raw_packets:list[Raw_Packet] = field(default_factory=list)
-    _responses:dict[list]        = field(default_factory=lambda: {'TCP':set(), 'ICMP':set()})
+    _responses:dict[list]        = field(default_factory=lambda: {'TCP':set(), 'UDP':set(), 'ICMP':set()})
 
 
 

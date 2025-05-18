@@ -47,13 +47,15 @@ class ArgParser_Manager:
         self._parser.add_argument('-r', '--random', action='store_true', help='Use the ports in random order')
         self._parser.add_argument('-p', '--ports', type=str, help='Specify ports to scan')
         self._parser.add_argument('-d', '--delay', nargs='?', const=True, default=False, help='Add a delay between packet transmissions')
+        self._parser.add_argument('-U', '--UDP', action='store_const', const='UDP', default=None, help='Perform UDP portscan')
         self._parser = self._parser.parse_args(self._data.arguments)
 
         self._data.target_ip = self._parser.host
         self._data.arguments = {
-            'ports':  self._parser.ports,
-            'random': self._parser.random,
-            'delay':  self._parser.delay,
+            'ports':    self._parser.ports,
+            'random':   self._parser.random,
+            'delay':    self._parser.delay,
+            'protocol': self._parser.UDP or 'TCP'
         }
 
 

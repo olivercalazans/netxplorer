@@ -26,8 +26,10 @@ FILES=(
     # DISSECTOR =================
     "dissector/__init__.py"
     "dissector/dissector.py"
+    "dissector/icmp_dissector.py"
     "dissector/ip_dissector.py"
     "dissector/tcp_dissector.py"
+    "dissector/udp_dissector.py"
     # MODEL =====================
     "models/__init__.py"
     "models/data.py"
@@ -47,6 +49,7 @@ FILES=(
     # UTILS =====================
     "utils/__init__.py"
     "utils/network_info.py"
+    "utils/packet_structure.py"
     "utils/port_set.py"
     "utils/type_hints.py"
     # ROOT ======================

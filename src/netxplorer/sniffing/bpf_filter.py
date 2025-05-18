@@ -15,13 +15,14 @@ class BPF_Filter:
     @staticmethod
     def get_filter(protocol:str) -> BPF_Instruction:
         match protocol:
-            case 'TCP':      return BPF_Filter._get_tcp_parameters()
-            case 'TCP-ICMP': return BPF_Filter._get_tcp_icmp_parameters()
+            case 'TCP':      return BPF_Filter._get_tcp_responses_parameters()
+            case 'UDP':      return BPF_Filter._get_udp_responses_parameters()
+            case 'TCP-ICMP': return BPF_Filter._get_tcp__and_icmp_responses_parameters()
 
 
 
     @staticmethod
-    def _get_tcp_parameters() -> BPF_Instruction:
+    def _get_tcp_responses_parameters() -> BPF_Instruction:
         my_ip_hex:int = struct.unpack('!I', socket.inet_aton(get_my_ip_address()))[0]
         return [
             (0x28, 0,  0, 0x0000000c), # Load EtherType field (offset 12)
@@ -43,7 +44,7 @@ class BPF_Filter:
 
 
     @staticmethod
-    def _get_tcp_icmp_parameters() -> BPF_Instruction:
+    def _get_tcp__and_icmp_responses_parameters() -> BPF_Instruction:
         my_ip_hex:int = struct.unpack('!I', socket.inet_aton(get_my_ip_address()))[0]
         return [
             (0x28,  0,  0, 0x0000000c), # Load EtherType (offset 12) into A
@@ -68,4 +69,26 @@ class BPF_Filter:
             (0x45,  0,  1, 0x00000004), # If RST bit set, accept
             (0x6,   0,  0, 0x00040000), # Accept packet (return 262144 bytes)
             (0x6,   0,  0, 0x00000000), # Reject otherwise
+        ]
+
+
+    @staticmethod
+    def _get_udp_responses_parameters() -> list[tuple]:
+        my_ip_hex:int = struct.unpack('!I', socket.inet_aton(get_my_ip_address()))[0]
+        return [
+            (0x28, 0,  0, 0x0000000c), # Load 2 bytes from [12] (EtherType)
+            (0x15, 0, 12, 0x00000800), # If EtherType != 0x0800 (IPv4), jump to reject
+            (0x20, 0,  0, 0x0000001e), # Load 4 bytes from [30] (IP dst addr)
+            (0x15, 0, 10, my_ip_hex),  # If dst IP != my IP, jump to reject
+            (0x30, 0,  0, 0x00000017), # Load 1 byte from [23] (IP protocol)
+            (0x15, 0,  8, 0x00000001), # If protocol != 1 (ICMP), jump to reject
+            (0x28, 0,  0, 0x00000014), # Load 2 bytes from [20] (IP flags+frag offset)
+            (0x45, 6,  0, 0x00001fff), # Check for fragmentation; if fragmented, reject
+            (0xb1, 0,  0, 0x0000000e), # Adjust offset (A += 14)
+            (0x50, 0,  0, 0x0000000e), # Load 1 byte from [A+14] (ICMP type)
+            (0x15, 0,  3, 0x00000003), # If ICMP type != 3 (dest unreachable), reject
+            (0x50, 0,  0, 0x0000000f), # Load 1 byte from [A+15] (ICMP code)
+            (0x15, 0,  1, 0x00000003), # If ICMP code != 3 (port unreachable), reject
+            (0x6,  0,  0, 0x00040000), # Accept packet (return 262144 bytes)
+            (0x6,  0,  0, 0x00000000), # Reject packet
         ]

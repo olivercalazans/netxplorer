@@ -4,15 +4,17 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
+
 import time
 import sys
-from dissector.dissector      import Packet_Dissector
-from models.data              import Data
-from pkt_build.packet_builder import Packet_Builder
-from pkt_build.packet_sender  import send_ping, send_layer_3_packet
-from sniffing.sniffer         import Sniffer
-from utils.network_info       import get_ip_range, get_host_name
-from utils.type_hints         import Raw_Packet
+from models.data        import Data
+from packet.dissector   import Packet_Dissector
+from packet.builder     import Packet_Builder
+from packet.sender      import send_ping, send_layer_3_packet
+from sniffing.sniffer   import Sniffer
+from utils.network_info import get_ip_range, get_host_name
+from utils.type_hints   import Raw_Packet
+
 
 
 class Network_Mapper:
@@ -65,14 +67,16 @@ class Network_Mapper:
     def _send_packets(self) -> None:
         self._data.target_ip   = get_ip_range()
         total_ips:int          = len(self._data.target_ip)
-        icmp_packet:Raw_Packet = Packet_Builder().get_icmp_packet()
+        icmp_packet:Raw_Packet = Packet_Builder().build_packet('ICMP')
         
         for index ,ip in enumerate(self._data.target_ip, start=1):
-            tcp_packet:Raw_Packet = Packet_Builder.get_tcp_ip_packet(ip, 80)
+            tcp_packet:Raw_Packet = Packet_Builder.build_packet('TCP', ip, 80)
             send_ping(icmp_packet, ip)
             send_layer_3_packet(tcp_packet, ip, 80)
             self._display_progress(index, total_ips)
             time.sleep(0.04)
+        
+        sys.stdout.write('\n')
 
 
     

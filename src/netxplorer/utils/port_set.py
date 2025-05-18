@@ -4,13 +4,22 @@
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
 
 
+import random
+
 
 class Port_Set:
+
+    @staticmethod
+    def get_random_port() -> int:
+        return random.randint(10000, 65535)
+
+
 
     @staticmethod
     def get_ports(port_str:str) -> dict:
         match port_str:
             case 'TCP': return list(Port_Set.TCP_PORTS.keys())
+            case 'UDP': return list(Port_Set.UDP_PORTS.keys())
             case _:     return Port_Set._get_specific_ports(port_str)
 
 
