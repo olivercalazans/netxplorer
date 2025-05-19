@@ -60,7 +60,7 @@ class TCP:
 
 
     @classmethod
-    def get_tcp_header(cls, packet:memoryview, ip_header_len:int) -> tuple[int, bytes]:
+    def get_tcp_header(cls, packet:memoryview, ip_header_len:int) -> tuple:
         len_ether_header:int = 14
         start:int            = len_ether_header + ip_header_len
         end:int              = start + 20
@@ -68,7 +68,7 @@ class TCP:
     
 
     @staticmethod
-    def get_tcp_source_port(tcp_header:memoryview) -> memoryview:
+    def get_tcp_source_port(tcp_header:tuple) -> int:
         return tcp_header[0]
     
 

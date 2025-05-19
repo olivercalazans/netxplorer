@@ -53,7 +53,7 @@ class ICMP:
 
 
     @staticmethod
-    def get_icmp_type_and_code(icmp_header:memoryview) -> tuple[int, int]:
+    def get_icmp_type_and_code(icmp_header:tuple) -> tuple[int, int]:
         icmp_type:int = icmp_header[0]
         icmp_code:int = icmp_header[1]
         return icmp_type, icmp_code

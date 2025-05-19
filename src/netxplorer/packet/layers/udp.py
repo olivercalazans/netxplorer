@@ -53,5 +53,5 @@ class UDP:
     
     
     @staticmethod
-    def get_udp_destiny_port(udp_header:memoryview) -> memoryview:
+    def get_udp_destiny_port(udp_header:tuple) -> int:
         return udp_header[1]
