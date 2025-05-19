@@ -4,6 +4,8 @@
 
 <br>
 
+
+
 <div align="center">
   <img src="https://img.shields.io/badge/port_scanning-brightgreen?style=for-the-badge" />
   <img src="https://img.shields.io/badge/banner_grabbing-brightgreen?style=for-the-badge" />
@@ -12,19 +14,34 @@
 
 <br>
 
+
+
 ## Documentation
 For detailed documentation about NetXplorer, visit our [Wiki](https://github.com/olivercalazans/netxplorer/wiki).
 The documentation includes:
   - Overview of the code
   - Installation instructions
   - Command description
-  
+
 <br>
+
+
+
+## Flowchart
+For more details, see the [Wiki](https://github.com/olivercalazans/netxplorer/wiki/Flowchart).
+
+<br>
+<img src="images/flowchart.png" alt="Flowchart" width="100%"/>
+
+<br>
+
+
 
 ## Installation
 To make it easier to use this project, a bash script has been created to handle the entire installation. Simply run the [setup.sh](https://github.com/olivercalazans/netxplorer/blob/main/src/netxplorer/setup.sh) script, and everything will be set up for you. If you prefer to run the code manually, follow the steps in the [Wiki](https://github.com/olivercalazans/netxplorer/wiki/Installation).
 
 <br>
+
 
 ## Dependencies
 This project has a single dependency: Python 3.10 or higher. This code relies solely on Python's standard libraries.
@@ -32,6 +49,8 @@ This project has a single dependency: Python 3.10 or higher. This code relies so
 > Although the code is designed to run on Linux systems, it can also be used on Windows via WSL (Windows Subsystem for Linux).
 
 <br>
+
+
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
