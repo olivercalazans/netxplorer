@@ -31,7 +31,7 @@ The documentation includes:
 For more details, see the [Wiki](https://github.com/olivercalazans/netxplorer/wiki/Flowchart).
 
 <br>
-<img src="images/flowchart.png" alt="Flowchart" width="100%"/>
+<img src="images/flowchart2.png" alt="Flowchart" width="100%"/>
 
 <br>
 
