@@ -13,7 +13,7 @@ SOURCE_DIR=$(dirname "$(realpath "$0")")
 ROOT_DIR=${SOURCE_DIR%/*/*}
 DESTINY_DIR="/opt/netxplorer"
 WRAPPER_FILE="xplorer"
-DIRECTORIES=("config" "core" "models" "sniffing" "utils")
+DIRECTORIES=("config" "core" "models" "packet" "packet/layers" "sniffing" "utils")
 FILES=(
     # CONFIG ===================
     "config/__init__.py"              
@@ -23,25 +23,20 @@ FILES=(
     "core/banner_grabber.py"
     "core/network_mapper.py"
     "core/port_scanner.py"
-    # DISSECTOR =================
-    "dissector/__init__.py"
-    "dissector/dissector.py"
-    "dissector/icmp_dissector.py"
-    "dissector/ip_dissector.py"
-    "dissector/tcp_dissector.py"
-    "dissector/udp_dissector.py"
     # MODEL =====================
     "models/__init__.py"
     "models/data.py"
-    # PACKET BUILD ==============
-    "pkt_build/__init__.py"
-    "pkt_build/header_icmp.py"
-    "pkt_build/header_ip.py"
-    "pkt_build/header_tcp.py"
-    "pkt_build/header_udp.py"
-    "pkt_build/layer_4_utils.py"
-    "pkt_build/packet_builder.py"
-    "pkt_build/packet_sender.py"
+    # PACKET ====================
+    "packet/layers/__init__.py"
+    "packet/layers/icmp.py"
+    "packet/layers/ip.py"
+    "packet/layers/layer_4_utils.py"
+    "packet/layers/tcp.py"
+    "packet/layers/udp.py"
+    "packet/__init__.py"
+    "packet/builder.py"
+    "packet/dissector.py"
+    "packet/sender.py"
     # SNIFFING ==================
     "sniffing/__init__.py"
     "sniffing/bpf_filter.py"
@@ -49,7 +44,6 @@ FILES=(
     # UTILS =====================
     "utils/__init__.py"
     "utils/network_info.py"
-    "utils/packet_structure.py"
     "utils/port_set.py"
     "utils/type_hints.py"
     # ROOT ======================
