@@ -146,7 +146,8 @@ class Port_Scanner:
             print(f'Status: {status} -> {port:>5} - {description}')
         
         return open_ports
-    
+
+
     
     def _display_udp_result(self) -> None:
         open_ports:int = 0
@@ -155,6 +156,7 @@ class Port_Scanner:
             if port in self._data.responses['UDP']:
                 continue
             
+            open_ports += 1
             description:str = Port_Set.get_udp_port_description(port)
             print(f'Status: Potencially -> {port:>5} - {description}')
 
