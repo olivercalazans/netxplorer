@@ -24,14 +24,13 @@ class Packet_Dissector():
 
 
 
-    __slots__ = ('_data', '_packet', '_ip_header', '_len_ip_header', '_other_packets')
+    __slots__ = ('_data', '_packet', '_ip_header', '_len_ip_header')
 
     def __init__(self, data:Data) -> None:
         self._data:Data            = data
         self._packet:memoryview    = None
         self._ip_header:memoryview = None
         self._len_ip_header:int    = None
-        self._other_packets:list   = []
 
 
 
@@ -57,35 +56,10 @@ class Packet_Dissector():
             protocol_byte:int = IP.get_protocol(self._ip_header)
 
             match protocol_byte:
-                case 1: protocol, packet_info = self._dissect_icmp_header()
-                case 6: protocol, packet_info = self._dissect_tcp_header()
-                case _: continue
+                case  1: self._dissect_icmp_header()
+                case  6: self._dissect_tcp_header()
+                case 17: self._dissect_udp_header()
 
-            if protocol is None: continue
-
-            self._data.add_packet(protocol, packet_info)
-        sys.stdout.write('\n')
-
-        if self._other_packets: self._dissect_other_packets()
-        
-
-
-
-    def _dissect_other_packets(self) -> None:
-        len_other_packets:int = len(self._other_packets)
-        dissected_packets:int = 0
-
-        while self._other_packets:
-            dissected_packets += 1
-            self._display_progress(dissected_packets, len_other_packets, '(Others)')
-
-            self._packet:memoryview = memoryview(self._other_packets.pop())
-            self._dissect_ip_header(0)
-            protocol, packet_info   = self._dissect_udp_header()
-            
-            if protocol is None: continue
-
-            self._data.add_packet(protocol, packet_info)
         sys.stdout.write('\n')
 
     
@@ -111,28 +85,32 @@ class Packet_Dissector():
 
 
 
-    def _dissect_tcp_header(self) -> tuple[str, tuple] | None:
+    def _dissect_tcp_header(self) -> None:
         try:
             source_ip:str    = IP.get_source_ip(self._ip_header)
             tcp_header:tuple = TCP.get_tcp_header(self._packet, self._len_ip_header)
             source_port:int  = TCP.get_tcp_source_port(tcp_header)
             flag_status:str  = TCP.get_tcp_flag_status(tcp_header)
 
-            if flag_status is None: return None, None
+            if flag_status is None: return
 
-            return 'TCP', (source_ip, source_port, flag_status)
+            self._data.add_packet_info('TCP', (source_ip, source_port, flag_status))
+        
         except (IndexError, struct.error, ValueError):
-            return None, None
+            return
         
     
 
-    def _dissect_udp_header(self) -> int | None:
-        try: 
+    def _dissect_udp_header(self) -> tuple[str, int] | None:
+        try:
+            dst_ip:str            = IP.get_destiny_ip(self._ip_header)
             udp_header:memoryview = UDP.get_udp_header(self._packet, self._len_ip_header)
             dst_port:int          = UDP.get_udp_destiny_port(udp_header)
-            return 'UDP', dst_port
-        except:
-            return None, None
+
+            return self._data.add_udp_info((dst_ip, dst_port))
+        
+        except Exception as e:
+            return
 
 
 
@@ -145,8 +123,9 @@ class Packet_Dissector():
 
             if icmp_type == 3 and icmp_code == 3:
                 payload:bytes = ICMP.extract_icmp_payload(self._packet, self._len_ip_header)
-                self._other_packets.append(payload)
+                self._data.raw_packets.append(payload)
 
-            return 'ICMP', (source_ip, source_mac)
+            self._data.add_packet_info('ICMP', (source_ip, source_mac))
+        
         except (IndexError, struct.error, ValueError):
-            return None, None
+            return

@@ -111,6 +111,13 @@ class Port_Set:
     }
 
 
+
+    @staticmethod
+    def get_udp_port_description(port:int) -> str:
+        return Port_Set.UDP_PORTS.get(port, 'Ephemeral Port / Dynamic Port')
+
+
+
     UDP_PORTS = {
         53    : 'DNS - Domain Name System (queries)',
         67    : 'DHCP - Dynamic Host Configuration Protocol (Server)',

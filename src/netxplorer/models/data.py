@@ -60,7 +60,13 @@ class Data:
     @property
     def responses(self) -> dict[list]:
         return self._responses
+
     
-    def add_packet(self, protocol:str, packet_info:tuple) -> None:
+    def add_packet_info(self, protocol:str, packet_info:tuple) -> None:
         if packet_info[0] in self._target_ip:
             self._responses[protocol].add(packet_info)
+
+
+    def add_udp_info(self, packet_info:tuple) -> None:
+        if packet_info[0] in self._target_ip:
+            self._responses['UDP'].add(packet_info[1])

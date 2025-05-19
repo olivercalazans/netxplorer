@@ -126,11 +126,37 @@ class Port_Scanner:
 
     def _display_result(self) -> None:
         print(f'>> IP: {self._data.target_ip} - Hostname: {get_host_name(self._data.target_ip)}')
+
+        if self._data.responses['TCP']:
+            open_ports:int = self._display_tcp_result()
         
+        if self._data.responses['UDP']:
+            open_ports:int = self._display_udp_result()
+
+        print(f'Open ports: {open_ports}/{len(self._data.target_ports)}')
+
+
+
+    
+    def _display_tcp_result(self) -> None:        
         open_ports = 0
         for _, port, status in self._data.responses['TCP']:
             description:str = Port_Set.get_tcp_port_description(port)
             open_ports += 1
             print(f'Status: {status} -> {port:>5} - {description}')
         
-        print(f'Open ports: {open_ports}/{len(self._data.target_ports)}')
+        return open_ports
+    
+    
+    def _display_udp_result(self) -> None:
+        open_ports:int = 0
+        for port in self._data.target_ports:
+        
+            if port in self._data.responses['UDP']:
+                continue
+            
+            description:str = Port_Set.get_udp_port_description(port)
+            print(f'Status: Potencially -> {port:>5} - {description}')
+
+        return open_ports
+        

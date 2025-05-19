@@ -46,11 +46,12 @@ class UDP:
 
     @classmethod
     def get_udp_header(cls, packet:memoryview, len_ip_header:int) -> memoryview:
-        len_ether_header:int = 0
+        len_ether_header:int = 14
         udp_offset:int       = len_ether_header + len_ip_header
         return cls._UDP_HEADER_STRUCT.unpack(packet[udp_offset:udp_offset + 8])
     
     
+    
     @staticmethod
     def get_udp_destiny_port(udp_header:memoryview) -> memoryview:
-        return udp_header[2:4]
+        return udp_header[1]

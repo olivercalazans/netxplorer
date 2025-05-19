@@ -62,3 +62,10 @@ class IP:
     def get_source_ip(cls, ip_header:memoryview) -> str:
         raw_bytes:bytes = cls._SOURCE_IP_STRUCT.unpack(ip_header[12:16])[0]
         return socket.inet_ntoa(raw_bytes)
+    
+
+
+    @classmethod
+    def get_destiny_ip(cls, ip_header:memoryview) -> str:
+        raw_bytes:bytes = cls._SOURCE_IP_STRUCT.unpack(ip_header[16:20])[0]
+        return socket.inet_ntoa(raw_bytes)
