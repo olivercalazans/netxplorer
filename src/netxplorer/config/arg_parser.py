@@ -68,5 +68,7 @@ class ArgParser_Manager:
         self._parser = self._parser.parse_args(self._data.arguments)
 
         self._data.target_ip = self._parser.host
-        self._data.target_ports     = self._parser.port
-        self._data.arguments = {'protocol': self._parser.protocol}
+        self._data.arguments = {
+            'protocol': self._parser.protocol,
+            'port':     self._parser.port
+        }

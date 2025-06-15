@@ -48,7 +48,7 @@ class Banner_Grabber:
 
     def _grab_banners_on_the_protocol(self) -> None:
         protocol = self._protocol_dictionary().get(self._data.arguments['protocol'])
-        port     = self._data.target_ports or protocol['port']
+        port     = self._data.arguments['port'] or protocol['port']
         protocol['func'](self._data.target_ip, port)
 
 
@@ -61,6 +61,8 @@ class Banner_Grabber:
             'http':  {'func': http_banner_grabbing,  'port': 80},
             'https': {'func': https_banner_grabbing, 'port': 443}
         }
+
+
 
 
 # FUNCTIONS ==================================================================================================
