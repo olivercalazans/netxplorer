@@ -31,8 +31,9 @@ The documentation includes:
 For more details, see the [Wiki](https://github.com/olivercalazans/netxplorer/wiki/Flowchart).
 
 <br>
-<img src="images/flowchart2.png" alt="Flowchart" width="100%"/>
-
+<p align="center">
+  <img src="images/netxplorer.drawio.svg" alt="Flowchart" width="50%" />
+</p>
 <br>
 
 
