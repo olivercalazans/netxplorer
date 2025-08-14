@@ -1,4 +1,4 @@
-# Command Reference
+<h1 align="center"> Command Reference </h1>
 
 This document explains all commands and flags available in the project, describing their purpose and usage.
 
