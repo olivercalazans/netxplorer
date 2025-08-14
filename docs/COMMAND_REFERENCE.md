@@ -1,7 +1,12 @@
-# Command Refence
+# Command Reference
 
+This document explains all commands and flags available in the project, describing their purpose and usage.
 
+- [Port Scanning](#port-scanning)
+- [Network Mapping](#network-mapping)
+- [Banner Grabbing](#banner-grabbing)
 
+<br>
 
 
 # **Port Scanning**
