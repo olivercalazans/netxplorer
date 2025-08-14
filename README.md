@@ -17,18 +17,19 @@
 
 
 ## Documentation
-For detailed documentation about NetXplorer, visit our [Wiki](https://github.com/olivercalazans/netxplorer/wiki).
+For detailed documentation about NetXplorer, visit the [documents](https://github.com/olivercalazans/netxplorer/tree/main/docs).
 The documentation includes:
-  - Overview of the code
-  - Installation instructions
-  - Command description
+  - [About NetXplorer](https://github.com/olivercalazans/netxplorer/blob/main/docs/ABOUT_NETXPLORER.md)
+  - [Overview of the code](https://github.com/olivercalazans/netxplorer/blob/main/docs/CODE_WALKTHROUGH.md)
+  - [Installation instructions](https://github.com/olivercalazans/netxplorer/blob/main/docs/ABOUT_NETXPLORER.md)
+  - [Command description](https://github.com/olivercalazans/netxplorer/blob/main/docs/COMMAND_REFERENCE.md)
 
 <br>
 
 
 
 ## Flowchart
-For more details, see the [Wiki](https://github.com/olivercalazans/netxplorer/wiki/Flowchart).
+For more details, see the [documentation](https://github.com/olivercalazans/netxplorer/blob/main/docs/CODE_WALKTHROUGH.md).
 
 <br>
 <p align="center">
@@ -39,7 +40,7 @@ For more details, see the [Wiki](https://github.com/olivercalazans/netxplorer/wi
 
 
 ## Installation
-To make it easier to use this project, a bash script has been created to handle the entire installation. Simply run the [setup.sh](https://github.com/olivercalazans/netxplorer/blob/main/src/netxplorer/setup.sh) script, and everything will be set up for you. If you prefer to run the code manually, follow the steps in the [Wiki](https://github.com/olivercalazans/netxplorer/wiki/Installation).
+To make it easier to use this project, a bash script has been created to handle the entire installation. Simply run the [setup.sh](https://github.com/olivercalazans/netxplorer/blob/main/src/netxplorer/setup.sh) script, and everything will be set up for you. If you prefer to run the code manually, follow the steps in the [documentation](https://github.com/olivercalazans/netxplorer/blob/main/docs/ABOUT_NETXPLORER.md).
 
 <br>
 
