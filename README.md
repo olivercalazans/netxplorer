@@ -1,6 +1,6 @@
 <h1 align="center"> NetXplorer </h1>
 
-NetXplorer is a command-line tool developed in Python for network analysis and exploration. It allows users to gather information about active devices and services, providing a simple and efficient interface for Linux users. ***It was used as a proof of concept for the Seeker project***.
+NetXplorer is a command-line tool developed in Python for network analysis and exploration. It allows users to gather information about active devices and services, providing a simple and efficient interface for Linux users. ***It was used as a proof of concept for the [Seeker project](https://github.com/olivercalazans/seeker)***.
 
 <br>
 
