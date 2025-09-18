@@ -1,9 +1,3 @@
-# MIT License
-# Copyright (c) 2024 Oliver Calazans
-# Repository: https://github.com/olivercalazans/netxplorer
-# Permission is hereby granted, free of charge, to any person obtaining a copy of this software...
-
-
 import socket
 import fcntl
 import struct
